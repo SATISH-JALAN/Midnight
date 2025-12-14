@@ -1,0 +1,7 @@
+{
+  "name": "Midnight Radio",
+  "description": "A decentralized ephemeral voice streaming platform with a deep space radio telescope aesthetic.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

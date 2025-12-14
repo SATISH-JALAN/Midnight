@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Midnight Radio | Deep Space Observatory</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@400;500;600;700;900&family=Megrim&display=swap"
+    rel="stylesheet">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <link rel="stylesheet" href="/src/index.css">
+  <style>
+    body {
+      background-color: #020204;
+      color: #E0E7FF;
+      overflow: hidden;
+    }
+
+    /* Smooth Scrollbar */
+    ::-webkit-scrollbar {
+      width: 2px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+
+    /* HUD Utilities */
+    .hud-panel {
+      background: rgba(5, 7, 20, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .text-glow {
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    /* CRT Phosphor Burn-in Effect */
+    .text-phosphor {
+      text-shadow: 0 0 2px currentColor, 0 0 8px currentColor, 0 0 15px currentColor;
+      filter: blur(0.3px);
+    }
+
+    /* CRT Scanline (Subtle) */
+    .crt-lines {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background-size: 100% 2px, 3px 100%;
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      opacity: 0.15;
+    }
+
+    .scan-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: rgba(0, 240, 255, 0.1);
+      opacity: 0.2;
+      animation: scan 8s linear infinite;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    @keyframes scan {
+      0% {
+        transform: translateY(-100%);
+      }
+
+      100% {
+        transform: translateY(100vh);
+      }
+    }
+
+    /* Signal Card Pulse Animation */
+    @keyframes signal-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);
+        border-color: rgba(6, 182, 212, 0.4);
+      }
+
+      50% {
+        box-shadow: 0 0 25px rgba(6, 182, 212, 0.3);
+        border-color: rgba(6, 182, 212, 0.8);
+      }
+    }
+
+    .animate-signal-pulse {
+      animation: signal-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Text Glitch Effect */
+    .glitch-text {
+      position: relative;
+      animation: glitch-anim 3s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-anim {
+      0% {
+        text-shadow: -1px 0 #00F0FF;
+      }
+
+      2% {
+        text-shadow: 1px 0 #FF2A2A;
+      }
+
+      4% {
+        text-shadow: -1px 0 #00F0FF;
+      }
+
+      100% {
+        text-shadow: none;
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <div class="crt-lines"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
