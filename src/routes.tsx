@@ -9,17 +9,18 @@ import App from './App';
 // We will need a MainLayout that wraps the outlet.
 
 import { MainLayout } from '@/layouts/MainLayout';
-import { StreamPage } from '@/pages/Stream';
-import { BroadcastPage } from '@/pages/Broadcast';
-import { CollectionPage } from '@/pages/Collection';
-import { ExplorePage } from '@/pages/Explore';
 
-// Since pages don't exist yet, we can't fully wire them. 
-// But per task list, we are creating routes.tsx.
-// I will create simple placeholders or generic components for now if files don't exist.
-// Or better: I should create the Layout and Pages in the next step (Refactor App.tsx).
+// Lazy Load Pages for Performance
+const StreamPage = React.lazy(() => import('@/pages/Stream').then(module => ({ default: module.StreamPage })));
+const BroadcastPage = React.lazy(() => import('@/pages/Broadcast').then(module => ({ default: module.BroadcastPage })));
+const CollectionPage = React.lazy(() => import('@/pages/Collection').then(module => ({ default: module.CollectionPage })));
+const ExplorePage = React.lazy(() => import('@/pages/Explore').then(module => ({ default: module.ExplorePage })));
 
-// Let's define the intended structure.
+const LoadingFallback = () => (
+    <div className="flex items-center justify-center h-full w-full bg-space-black">
+        <div className="w-8 h-8 rounded-full border-2 border-accent-cyan border-t-transparent animate-spin" />
+    </div>
+);
 
 export const router = createBrowserRouter([
     {
@@ -28,19 +29,26 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <StreamPage />, // This will eventually replace the "Live" view of App.tsx
+                element: <React.Suspense fallback={<LoadingFallback />}><StreamPage /></React.Suspense>,
             },
             {
                 path: 'explore',
-                element: <ExplorePage />,
+                element: <React.Suspense fallback={<LoadingFallback />}><ExplorePage /></React.Suspense>,
             },
             {
                 path: 'broadcast',
-                element: <BroadcastPage />,
+                element: <React.Suspense fallback={<LoadingFallback />}><BroadcastPage /></React.Suspense>,
             },
             {
                 path: 'collection',
-                element: <CollectionPage />,
+                element: <React.Suspense fallback={<LoadingFallback />}><CollectionPage /></React.Suspense>,
+            },
+            {
+                path: 'settings', // Added missing route
+                element: <React.Suspense fallback={<LoadingFallback />}>
+                    {/* Inline lazy for settings if not exported yet, but assuming it follows pattern */}
+                    {React.createElement(React.lazy(() => import('@/pages/Settings').then(m => ({ default: m.SettingsPage }))))}
+                </React.Suspense>
             }
         ]
     }

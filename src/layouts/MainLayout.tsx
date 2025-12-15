@@ -24,6 +24,8 @@ export const MainLayout: React.FC = () => {
         currentSignal,
         isRecording,
         recordingTime,
+        command,           // Get command
+        triggerCommand,    // Get trigger
         setWallet,
         setModal,
         setActiveView,
@@ -36,11 +38,23 @@ export const MainLayout: React.FC = () => {
         modalProps
     } = useRadioStore();
 
-    // Sync Recorder State with Store
+    // Sync Recorder State with Store & Handle Commands
     React.useEffect(() => {
         setIsRecording(recorder.isRecording);
         setRecordingTime(recorder.recordingTime);
-    }, [recorder.isRecording, recorder.recordingTime, setIsRecording, setRecordingTime]);
+
+        // Max Duration Enforcement (30s)
+        if (recorder.isRecording && recorder.recordingTime >= 30) {
+            recorder.stopRecording();
+            addToast("Max Duration Reached (30s)", "INFO");
+        }
+
+        // Remote Command Handling
+        if (command === 'STOP_RECORDING' && recorder.isRecording) {
+            recorder.stopRecording();
+            triggerCommand('NONE'); // Reset
+        }
+    }, [recorder.isRecording, recorder.recordingTime, setIsRecording, setRecordingTime, command, triggerCommand, recorder.stopRecording]);
 
     // Handle View Navigation side-effects
     React.useEffect(() => {

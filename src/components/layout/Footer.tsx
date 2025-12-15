@@ -1,7 +1,7 @@
 import React from 'react';
 import { gsap } from 'gsap';
 import { useRadioStore } from '@/store/useRadioStore';
-import { CloudRain, Volume2, Zap, Radio, Disc, Activity } from 'lucide-react';
+import { CloudRain, Volume2, Zap, Radio, Disc, Activity, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ViewType } from '@/types';
 
@@ -21,18 +21,20 @@ export const Footer: React.FC = () => {
                 delay: 0.5
             });
 
-            // Random LED flicker effect
-            gsap.to(".led-segment.active", {
-                opacity: 0.8,
-                duration: 0.1,
-                repeat: -1,
-                yoyo: true,
-                repeatDelay: 2,
-                stagger: {
-                    amount: 2,
-                    from: "random"
-                }
-            });
+            // Random LED flicker effect - Only if elements exist
+            if (mixerRef.current?.querySelector(".led-segment.active")) {
+                gsap.to(".led-segment.active", {
+                    opacity: 0.8,
+                    duration: 0.1,
+                    repeat: -1,
+                    yoyo: true,
+                    repeatDelay: 2,
+                    stagger: {
+                        amount: 2,
+                        from: "random"
+                    }
+                });
+            }
         }, mixerRef);
         return () => ctx.revert();
     }, []);
@@ -213,6 +215,7 @@ export const Footer: React.FC = () => {
 
     const navItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
         { id: 'LIVE', label: 'Live Stream', icon: <Activity className="w-4 h-4" /> },
+        { id: 'BROADCAST', label: 'Transmit', icon: <Mic className="w-4 h-4" /> },
         { id: 'MY', label: 'Collection', icon: <Disc className="w-4 h-4" /> },
         { id: 'EXPLORE', label: 'Explore', icon: <Radio className="w-4 h-4" onClick={(e) => handleAlienEgg(e)} /> },
     ];

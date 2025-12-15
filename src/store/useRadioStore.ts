@@ -43,7 +43,10 @@ interface RadioState {
   recordingTime: number;
   toasts: Toast[];
 
-  // Actions
+  // Bridge for remote controls
+  command: 'STOP_RECORDING' | 'NONE';
+  triggerCommand: (cmd: 'STOP_RECORDING' | 'NONE') => void;
+
   setSignals: (signals: Signal[]) => void;
   setCurrentSignal: (signal: Signal | null) => void;
   setIsPlaying: (isPlaying: boolean) => void;
@@ -85,6 +88,7 @@ export const useRadioStore = create<RadioState>((set) => ({
 
   modal: 'NONE',
   modalProps: {},
+  command: 'NONE', // Init
   mintingStatus: 'IDLE',
   isRecording: false,
   isPlaying: false,
@@ -92,6 +96,7 @@ export const useRadioStore = create<RadioState>((set) => ({
   toasts: [],
 
   // Actions
+  triggerCommand: (command) => set({ command }),
   setSignals: (signals) => set({ signals }),
   setCurrentSignal: (currentSignal) => set({ currentSignal }),
   setIsPlaying: (isPlaying) => set({ isPlaying }),
