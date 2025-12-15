@@ -12,6 +12,11 @@ export const Header: React.FC<HeaderProps> = ({ listenerCount }) => {
   const headerRef = useRef<HTMLDivElement>(null);
   const morseRef = useRef<SVGSVGElement>(null);
 
+  // Quick augmentation for the easter egg tracking
+  useEffect(() => {
+    (window as any).crtClickCount = 0;
+  }, []);
+
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -90,7 +95,15 @@ export const Header: React.FC<HeaderProps> = ({ listenerCount }) => {
   return (
     <header ref={headerRef} className="h-[70px] w-full flex items-center justify-between px-4 md:px-8 relative z-50 shrink-0">
       {/* Brand */}
-      <div className="flex items-center gap-4 cursor-default group">
+      <div
+        className="flex items-center gap-4 cursor-pointer group select-none"
+        onClick={(e) => {
+          // CRT Easter Egg
+          if (e.detail === 3) {
+            document.body.classList.toggle('crt-mode');
+          }
+        }}
+      >
         <div className="w-10 h-10 rounded border border-ui-border bg-space-panel flex items-center justify-center group-hover:border-accent-phosphor/50 transition-colors relative overflow-hidden">
           <Radio ref={morseRef} className="text-accent-phosphor relative z-10" size={18} />
           <div className="absolute inset-0 bg-accent-phosphor/10 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300" />

@@ -336,28 +336,42 @@ const ActiveState: React.FC<{
 
   return (
     <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${isTuning ? 'blur-sm scale-[0.98]' : 'blur-0 scale-100'}`}>
-      {/* Top Bar Info - Reduced padding for more vertical space on mobile */}
+      {/* Top Bar Info */}
       <div ref={infoRef} className="flex justify-between items-start pt-6 px-6 pb-2 md:pt-10 md:px-8 md:pb-6 w-full shrink-0">
         <div className="flex-1 min-w-0 mr-4">
           <div className="flex items-center gap-2 mb-2">
-            <div className={`w-2 h-2 shrink-0 rounded-full bg-accent-${moodColor} shadow-glow animate-pulse`} />
+            <div className={`w-2 h-2 shrink-0 rounded-full bg-accent-${moodColor} shadow-[0_0_10px_currentColor] animate-pulse`} />
             <span className={`font-mono text-[10px] md:text-xs text-accent-${moodColor} tracking-widest uppercase whitespace-nowrap`}>
-              {isPlaying ? 'Live Transmission' : 'Signal Detected'}
+              {isPlaying ? 'Live Transmission' : 'Signal Archive'}
             </span>
           </div>
-          {/* Decoded Text Effect for Title */}
-          <h2 className="font-display font-bold text-2xl md:text-4xl text-white tracking-wide truncate">
-            <DecodedText text={signal.sector} />
+
+          <h2 className="font-display font-bold text-3xl md:text-5xl text-white tracking-tight truncate leading-tight">
+            <DecodedText text={`SIGNAL #${signal.id.substring(0, 4)}`} />
           </h2>
-          <div className="font-mono text-[10px] md:text-xs text-ui-dim mt-1 whitespace-nowrap">
-            ID: {signal.id} • {signal.mood}
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 font-mono text-[10px] md:text-xs text-ui-dim uppercase">
+            <span className="text-white bg-white/10 px-1 rounded flex items-center gap-1">
+              <Activity size={10} className="text-accent-cyan" /> {signal.source || 'UNKNOWN SECTOR'}
+            </span>
+            <span>•</span>
+            <span className="text-accent-phosphor/80">{signal.mood}</span>
+            <span>•</span>
+            <span>{signal.timestamp}</span>
           </div>
         </div>
-        <div className="text-right shrink-0">
-          <div className="bg-white/5 border border-ui-border px-2 py-1 md:px-3 rounded flex items-center gap-2">
-            <Share2 size={10} className="text-accent-purple" />
-            <span className="font-mono text-[9px] md:text-xs text-ui-text">{signal.echoes} ECHOES</span>
+
+        <div className="text-right shrink-0 flex flex-col items-end gap-2">
+          <div className="bg-space-black/50 border border-ui-border px-3 py-1.5 rounded flex items-center gap-2 backdrop-blur-md">
+            <Share2 size={12} className="text-accent-purple" />
+            <span className="font-mono text-[10px] md:text-xs text-white bold">{signal.echoes}</span>
           </div>
+          {signal.tips > 0 && (
+            <div className="bg-space-black/50 border border-ui-border px-3 py-1.5 rounded flex items-center gap-2 backdrop-blur-md">
+              <DollarSign size={12} className="text-accent-orange" />
+              <span className="font-mono text-[10px] md:text-xs text-white bold">{signal.tips}</span>
+            </div>
+          )}
         </div>
       </div>
 

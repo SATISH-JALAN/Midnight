@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Header, ControlBar } from '@/components/business/Controls';
+import { Header } from '@/components/business/Controls';
+import { Footer } from '@/components/layout/Footer';
 import { Modals } from '@/components/business/Modals';
 import { ToastContainer } from '@/components/business/Toast';
 import { ParticleField, ChannelSwitchOverlay } from '@/components/ui/Effects';
@@ -30,7 +31,9 @@ export const MainLayout: React.FC = () => {
         setMintingStatus,
         setIsRecording,
         setRecordingTime,
-        addToast
+        addToast,
+        activeView,
+        modalProps
     } = useRadioStore();
 
     // Sync Recorder State with Store
@@ -39,35 +42,30 @@ export const MainLayout: React.FC = () => {
         setRecordingTime(recorder.recordingTime);
     }, [recorder.isRecording, recorder.recordingTime, setIsRecording, setRecordingTime]);
 
+    // Handle View Navigation side-effects
+    React.useEffect(() => {
+        if (activeView === 'LIVE') navigate('/');
+        if (activeView === 'MY') navigate('/collection');
+        if (activeView === 'BROADCAST') navigate('/broadcast');
+        if (activeView === 'EXPLORE') navigate('/explore');
+        if (activeView === 'SETTINGS') navigate('/settings');
+    }, [activeView, navigate]);
+
     const handleConnectWallet = () => {
         if (openConnectModal) {
             openConnectModal();
         } else {
-            // Fallback for demo if rainbowkit not ready or mocked
             setModal('WALLET');
         }
     };
 
     const handleWalletConfirm = () => {
-        // Mock wallet confirm for custom modal if used
         if (modal === 'WALLET') {
             setWallet({ isConnected: true, address: '0x123...abc', balance: '10.5' });
             setModal('NONE');
             addToast('Uplink Established', 'SUCCESS');
         }
     };
-
-    const handleViewChange = (view: string) => {
-        setTransitionTrigger(prev => prev + 1);
-        setTimeout(() => {
-            setActiveView(view);
-            if (view === 'LIVE') navigate('/');
-            if (view === 'MY') navigate('/collection');
-            if (view === 'LOG') navigate('/broadcast'); // Mapping LOG to Broadcast for now? Or keep separate
-        }, 150);
-    };
-
-    const currentView = location.pathname === '/' ? 'LIVE' : location.pathname.includes('collection') ? 'MY' : 'LOG';
 
     return (
         <div className="relative w-screen h-screen bg-space-black text-ui-text font-sans overflow-hidden flex flex-col selection:bg-accent-phosphor selection:text-black">
@@ -88,11 +86,7 @@ export const MainLayout: React.FC = () => {
                     <Outlet />
                 </main>
 
-                <ControlBar
-                    activeTab={currentView}
-                    onTabChange={handleViewChange}
-                    onDisconnect={() => setWallet({ isConnected: false, address: null, balance: '0' })}
-                />
+                <Footer />
             </div>
 
             <Modals
@@ -103,9 +97,10 @@ export const MainLayout: React.FC = () => {
                 recordingTime={recorder.recordingTime}
                 onRecordStart={recorder.startRecording}
                 onRecordStop={recorder.stopRecording}
-                onMint={() => { }} // TODO: Implement real mint flow
+                onMint={() => { }}
                 mintingStatus={mintingStatus}
                 currentSignal={currentSignal}
+                modalProps={modalProps}
             />
 
             <ToastContainer toasts={toasts} onRemove={removeToast} />

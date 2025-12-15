@@ -91,23 +91,23 @@ export const SignalQueue: React.FC<SignalQueueProps> = ({ onCloseMobile }) => {
                             onMouseEnter={(e) => !isActive && handleItemHover(e, true)}
                             onMouseLeave={(e) => !isActive && handleItemHover(e, false)}
                             className={`
-                group relative p-3 rounded border transition-colors duration-300 cursor-pointer overflow-hidden
-                ${isActive
-                                    ? 'active-signal bg-accent-cyan/10 border-accent-cyan/40 animate-signal-pulse'
-                                    : 'bg-space-panel border-transparent'
+                                group relative p-3 rounded border transition-all duration-300 cursor-pointer overflow-hidden
+                                ${isActive
+                                    ? 'active-signal bg-accent-cyan/5 border-l-4 border-l-accent-cyan border-y-accent-cyan/20 border-r-accent-cyan/20'
+                                    : 'bg-space-panel/40 border-l-4 border-l-transparent border-y-transparent border-r-transparent hover:bg-space-panel/80'
                                 }
-              `}
+                            `}
                         >
                             <div className="flex justify-between items-center relative z-10">
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
                                     <button
                                         onClick={(e) => handleItemClick(e, signal.id)}
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isActive ? 'bg-accent-cyan text-black' : 'bg-white/5 text-ui-dim group-hover:bg-white/20 group-hover:text-white'}`}
+                                        className={`w-8 h-8 rounded shrink-0 flex items-center justify-center transition-colors border ${isActive ? 'bg-accent-cyan text-black border-accent-cyan' : 'bg-black text-ui-dim border-ui-border group-hover:text-white group-hover:border-white/30'}`}
                                     >
                                         {isSignalPlaying ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" className="ml-0.5" />}
                                     </button>
 
-                                    <div>
+                                    <div className="min-w-0">
                                         <div className="flex items-center gap-2 mb-0.5">
                                             {isSignalPlaying && (
                                                 <div className="flex gap-0.5 h-2 items-end">
@@ -116,18 +116,21 @@ export const SignalQueue: React.FC<SignalQueueProps> = ({ onCloseMobile }) => {
                                                     <div className="w-0.5 bg-accent-cyan animate-[bounce_0.8s_infinite]" />
                                                 </div>
                                             )}
-                                            <span className={`font-mono text-xs font-bold ${isActive ? 'text-accent-cyan' : 'text-ui-text'}`}>#{signal.id}</span>
+                                            <span className={`font-mono text-xs font-bold truncate ${isActive ? 'text-accent-cyan' : 'text-ui-text group-hover:text-white'}`}>
+                                                SIGNAL #{signal.id.substring(0, 4)}
+                                            </span>
                                         </div>
-                                        <div className="font-mono text-[10px] text-ui-dim uppercase flex items-center gap-1">
-                                            {signal.sector}
-                                            {signal.mood !== 'VOID' && <span className={`w-1.5 h-1.5 rounded-full bg-accent-${getMoodColor(signal.mood)} ml-1`} />}
+                                        <div className="font-mono text-[9px] text-ui-dim uppercase flex items-center gap-2 truncate">
+                                            <span>{signal.source || 'UNKNOWN'}</span>
+                                            <span className="w-1 h-1 rounded-full bg-ui-dim" />
+                                            <span className={`text-accent-${getMoodColor(signal.mood)}`}>{signal.mood}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="text-right">
-                                    <div className="font-mono text-[10px] text-ui-dim mb-1">{signal.duration}s</div>
-                                    {signal.tips > 0 && <div className="text-[9px] text-accent-orange font-mono">◈ {signal.tips}</div>}
+                                <div className="text-right shrink-0 pl-2">
+                                    <div className="font-mono text-[10px] text-ui-dim mb-1 bg-black/30 px-1.5 rounded">{signal.duration}</div>
+                                    {signal.tips > 0 && <div className="text-[9px] text-accent-orange font-mono flex items-center justify-end gap-1"><Zap size={8} /> {signal.tips}</div>}
                                 </div>
                             </div>
                         </div>

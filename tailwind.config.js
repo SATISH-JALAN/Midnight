@@ -14,11 +14,11 @@ export default {
           panel: 'rgba(10, 15, 41, 0.7)'
         },
         accent: {
-          cyan: '#06b6d4',
-          phosphor: '#22d3ee',
-          purple: '#a855f7',
-          orange: '#f97316',
-          red: '#ef4444'
+          cyan: 'var(--color-accent-cyan)',
+          phosphor: 'var(--color-accent-phosphor)',
+          purple: 'var(--color-accent-purple)',
+          orange: 'var(--color-accent-orange)',
+          red: 'var(--color-accent-red)'
         },
         ui: {
           border: 'rgba(255, 255, 255, 0.1)',

@@ -12,6 +12,7 @@ import { MainLayout } from '@/layouts/MainLayout';
 import { StreamPage } from '@/pages/Stream';
 import { BroadcastPage } from '@/pages/Broadcast';
 import { CollectionPage } from '@/pages/Collection';
+import { ExplorePage } from '@/pages/Explore';
 
 // Since pages don't exist yet, we can't fully wire them. 
 // But per task list, we are creating routes.tsx.
@@ -28,6 +29,10 @@ export const router = createBrowserRouter([
             {
                 index: true,
                 element: <StreamPage />, // This will eventually replace the "Live" view of App.tsx
+            },
+            {
+                path: 'explore',
+                element: <ExplorePage />,
             },
             {
                 path: 'broadcast',

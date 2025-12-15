@@ -27,13 +27,14 @@ export const StreamPage: React.FC = () => {
             const MOODS = ['CALM', 'EXCITED', 'MYSTERIOUS', 'URGENT', 'VOID'] as const;
             const mocks: Signal[] = Array.from({ length: 8 }).map((_, i) => ({
                 id: Math.floor(Math.random() * 10000 + 1000).toString(),
-                sector: SECTORS[Math.floor(Math.random() * SECTORS.length)],
+                source: SECTORS[Math.floor(Math.random() * SECTORS.length)],
                 frequency: 432.0 + i,
-                duration: 30 + i * 5,
-                timestamp: new Date(),
+                duration: `0${Math.floor(1 + i / 2)}:${(30 + i * 5) % 60}`, // "01:30" format
+                timestamp: new Date().toISOString(),
                 mood: MOODS[i % MOODS.length],
                 tips: 0,
-                echoes: 0
+                echoes: 0,
+                broadcasterAddress: '0x123...abc'
             }));
             useRadioStore.getState().setSignals(mocks);
             useRadioStore.getState().setCurrentSignal(mocks[0]);
