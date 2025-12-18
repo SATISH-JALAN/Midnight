@@ -4,6 +4,9 @@ import { logger } from './config/logger.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { healthRoutes } from './routes/health.js';
+import { uploadRoutes } from './routes/upload.js';
+import { streamRoutes } from './routes/stream.js';
+import { audioRoutes } from './routes/audio.js';
 
 // Create Hono app
 const app = new Hono();
@@ -14,6 +17,9 @@ app.onError(errorHandler);
 
 // Routes
 app.route('/health', healthRoutes);
+app.route('/api/upload', uploadRoutes);
+app.route('/api/stream', streamRoutes);
+app.route('/api/audio', audioRoutes);
 
 // Root endpoint
 app.get('/', (c) => {
@@ -21,6 +27,12 @@ app.get('/', (c) => {
     name: 'Midnight Radio API',
     version: '1.0.0',
     status: 'running',
+    endpoints: {
+      health: 'GET /health',
+      upload: 'POST /api/upload',
+      stream: 'GET /api/stream',
+      audio: 'GET /api/audio/:noteId',
+    },
   });
 });
 
