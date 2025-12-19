@@ -7,6 +7,7 @@ import { healthRoutes } from './routes/health.js';
 import { uploadRoutes } from './routes/upload.js';
 import { streamRoutes } from './routes/stream.js';
 import { audioRoutes } from './routes/audio.js';
+import { wsManager } from './services/WebSocketManager.js';
 
 // Create Hono app
 const app = new Hono();
@@ -27,16 +28,18 @@ app.get('/', (c) => {
     name: 'Midnight Radio API',
     version: '1.0.0',
     status: 'running',
+    websocket: 'ws://localhost:' + env.PORT + '/ws',
     endpoints: {
       health: 'GET /health',
       upload: 'POST /api/upload',
       stream: 'GET /api/stream',
       audio: 'GET /api/audio/:noteId',
+      ws: 'WS /ws',
     },
   });
 });
 
-// Start Bun server
+// Start Bun server with WebSocket support
 const port = parseInt(env.PORT);
 
 logger.info(`🚀 Starting Midnight Radio Backend...`);
@@ -45,10 +48,28 @@ logger.info(`🌐 Frontend URL: ${env.FRONTEND_URL}`);
 
 const server = Bun.serve({
   port,
-  fetch: app.fetch,
+  fetch(req, server) {
+    const url = new URL(req.url);
+    
+    // Handle WebSocket upgrade for /ws path
+    if (url.pathname === '/ws') {
+      const upgraded = server.upgrade(req, {
+        data: { clientId: '', connectedAt: Date.now() },
+      });
+      if (upgraded) {
+        return undefined; // Upgrade successful
+      }
+      return new Response('WebSocket upgrade failed', { status: 400 });
+    }
+    
+    // Handle HTTP requests with Hono
+    return app.fetch(req, server);
+  },
+  websocket: wsManager.handlers,
 });
 
 logger.info(`✅ Server running on http://localhost:${server.port}`);
+logger.info(`🔌 WebSocket available at ws://localhost:${server.port}/ws`);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

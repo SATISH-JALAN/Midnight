@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { audioProcessor } from '../services/AudioProcessor.js';
 import { ipfsService } from '../services/IPFSService.js';
 import { queueManager } from '../services/QueueManager.js';
+import { wsManager } from '../services/WebSocketManager.js';
 import { logger } from '../config/logger.js';
 import type { Note } from '../types/index.js';
 
@@ -71,6 +72,9 @@ uploadRoutes.post('/', async (c) => {
 
     // 6. Add to queue
     queueManager.addNote(note);
+
+    // 7. Broadcast new note to all WebSocket clients
+    wsManager.broadcastNewNote(note);
 
     // 7. Return success response
     return c.json({

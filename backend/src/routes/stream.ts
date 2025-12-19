@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { queueManager } from '../services/QueueManager.js';
+import { wsManager } from '../services/WebSocketManager.js';
 
 export const streamRoutes = new Hono();
 
@@ -15,7 +16,7 @@ streamRoutes.get('/', (c) => {
     success: true,
     data: {
       notes,
-      totalListeners: 0, // Will be updated with WebSocket in Phase 5
+      totalListeners: wsManager.getClientCount(),
       activeNotes: stats.active,
       serverTime: Date.now(),
     },

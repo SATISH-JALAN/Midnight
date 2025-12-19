@@ -8,7 +8,8 @@
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir ./dist --target bun",
     "test:audio": "bun run src/test-audio.ts",
-    "test:ipfs": "bun run src/test-ipfs.ts"
+    "test:ipfs": "bun run src/test-ipfs.ts",
+    "test:blockchain": "bun run src/test-blockchain.ts"
   },
   "keywords": [
     "midnight-radio",
@@ -21,6 +22,7 @@
   "dependencies": {
     "@hono/node-server": "^1.19.7",
     "dotenv": "^17.2.3",
+    "ethers": "^6.16.0",
     "fluent-ffmpeg": "^2.1.3",
     "hono": "^4.11.1",
     "pinata": "^2.5.1",
