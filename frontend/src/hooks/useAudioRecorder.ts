@@ -119,7 +119,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   }, [audioUrl]);
 
   const stopRecording = useCallback(() => {
-    console.log('[AudioRecorder] Stop recording called, isRecording:', isRecording);
+    console.log('[AudioRecorder] Stop recording called');
     
     // Clear timer first
     if (timerRef.current) {
@@ -127,43 +127,57 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
       timerRef.current = null;
     }
 
-    if (!recorderRef.current) {
-      console.log('[AudioRecorder] No recorder ref found');
-      setIsRecording(false);
-      return;
-    }
-
     // Set recording state to false immediately for UI responsiveness
     setIsRecording(false);
 
-    recorderRef.current.stopRecording(() => {
-      console.log('[AudioRecorder] Recording stopped callback');
-      
-      if (recorderRef.current) {
-        const blob = recorderRef.current.getBlob();
-        console.log('[AudioRecorder] Got blob:', blob.size, 'bytes, type:', blob.type);
+    const recorder = recorderRef.current;
+    if (!recorder) {
+      console.log('[AudioRecorder] No recorder ref found');
+      return;
+    }
+
+    // Check recorder state before stopping
+    const state = recorder.getState?.() || recorder.state;
+    console.log('[AudioRecorder] Recorder state:', state);
+    
+    if (state === 'recording') {
+      recorder.stopRecording(() => {
+        console.log('[AudioRecorder] Recording stopped callback');
         
-        setAudioBlob(blob);
+        if (recorderRef.current) {
+          const blob = recorderRef.current.getBlob();
+          console.log('[AudioRecorder] Got blob:', blob.size, 'bytes, type:', blob.type);
+          
+          setAudioBlob(blob);
+          
+          // Create URL for playback
+          const url = URL.createObjectURL(blob);
+          setAudioUrl(url);
+          console.log('[AudioRecorder] Created audio URL:', url);
+        }
         
-        // Create URL for playback
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-        console.log('[AudioRecorder] Created audio URL:', url);
-      }
-      
-      // Stop stream tracks to release mic
+        // Stop stream tracks to release mic
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => {
+            track.stop();
+            console.log('[AudioRecorder] Stopped track:', track.label);
+          });
+          streamRef.current = null;
+        }
+        
+        // Clean up recorder
+        recorderRef.current = null;
+      });
+    } else {
+      console.log('[AudioRecorder] Recorder not in recording state, forcing stop');
+      // Force cleanup even if not in recording state
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => {
-          track.stop();
-          console.log('[AudioRecorder] Stopped track:', track.label);
-        });
+        streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
       }
-      
-      // Clean up recorder
       recorderRef.current = null;
-    });
-  }, [isRecording]);
+    }
+  }, []);
 
   const resetRecording = useCallback(() => {
     console.log('[AudioRecorder] Resetting recording');
