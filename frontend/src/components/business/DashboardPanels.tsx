@@ -352,6 +352,12 @@ export const StatsPanel: React.FC = () => {
     const [logs, setLogs] = useState<{ time: string, action: string, id: string, type: 'info' | 'success' | 'warning' }[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // Get real signals from store
+    const { signals, trendingSignals, setCurrentSignal, setIsPlaying } = useRadioStore();
+
+    // Use trendingSignals if available, otherwise use signals, fallback to empty array
+    const topSignals = (trendingSignals.length > 0 ? trendingSignals : signals).slice(0, 4);
+
     // Auto-generate network logs
     useEffect(() => {
         const actions = [
@@ -473,27 +479,35 @@ export const StatsPanel: React.FC = () => {
                 </div>
 
                 <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1">
-                    {[1, 2, 3, 4].map((i) => (
+                    {topSignals.length > 0 ? topSignals.map((signal, i) => (
                         <div
-                            key={i}
+                            key={signal.id}
+                            onClick={() => {
+                                setCurrentSignal(signal);
+                                setIsPlaying(true);
+                            }}
                             onMouseEnter={(e) => handleStatHover(e, true)}
                             onMouseLeave={(e) => handleStatHover(e, false)}
                             className="flex items-center justify-between p-2 rounded cursor-pointer group border border-transparent bg-white/5 hover:bg-white/10 transition-all"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="font-mono text-xs text-ui-dim font-bold w-4">0{i}</div>
+                                <div className="font-mono text-xs text-ui-dim font-bold w-4">0{i + 1}</div>
                                 <div>
-                                    <div className="font-mono text-xs text-ui-text group-hover:text-accent-cyan transition-colors">Signal #{4000 + i * 24}</div>
+                                    <div className="font-mono text-xs text-ui-text group-hover:text-accent-cyan transition-colors">Signal #{signal.id.substring(0, 4)}</div>
                                     <div className="font-mono text-[9px] text-ui-dim flex items-center gap-2">
-                                        <span>Sector 7G</span>
+                                        <span>{signal.source || 'Unknown Sector'}</span>
                                         <span className="w-1 h-1 rounded-full bg-ui-dim" />
-                                        <span>{100 - i * 15} Echoes</span>
+                                        <span>{signal.echoes || 0} Echoes</span>
                                     </div>
                                 </div>
                             </div>
                             <ArrowUpRight size={12} className="text-ui-dim group-hover:text-accent-cyan transition-colors transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 duration-300" />
                         </div>
-                    ))}
+                    )) : (
+                        <div className="text-center text-ui-dim font-mono text-xs py-4">
+                            No signals yet
+                        </div>
+                    )}
                 </div>
             </div>
 
