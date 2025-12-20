@@ -30,10 +30,26 @@ echoRoutes.post('/:parentNoteId', async (c) => {
       return c.json({ success: false, error: 'Wallet address is required' }, 400);
     }
 
-    // 3. Find parent note
-    const parentNote = queueManager.getNote(parentNoteId);
+    // 3. Find parent note (check in-memory queue first, then blockchain)
+    let parentNote = queueManager.getNote(parentNoteId);
+    let parentBroadcaster = parentNote?.broadcaster;
+    let parentSector = parentNote?.sector || 'Sector-8';
+    
+    // If not in queue, try to find on blockchain
     if (!parentNote) {
-      return c.json({ success: false, error: 'Parent note not found' }, 404);
+      logger.info({ parentNoteId }, 'Parent not in queue, checking blockchain');
+      
+      // Search blockchain for this noteId
+      const blockchainNfts = await blockchainService.getAllNFTs(50);
+      const blockchainParent = blockchainNfts.find(nft => nft.noteId === parentNoteId);
+      
+      if (blockchainParent) {
+        parentBroadcaster = blockchainParent.owner;
+        parentSector = blockchainParent.sector || 'Sector-8';
+        logger.info({ parentNoteId, owner: parentBroadcaster }, 'Found parent on blockchain');
+      } else {
+        return c.json({ success: false, error: 'Parent note not found' }, 404);
+      }
     }
 
     logger.info({ 
@@ -83,7 +99,7 @@ echoRoutes.post('/:parentNoteId', async (c) => {
       const result = await blockchainService.registerEcho(
         parentNoteId,
         processResult.noteId,
-        parentNote.broadcaster,
+        parentBroadcaster!,
         walletAddress
       );
       txHash = result.txHash;
@@ -103,7 +119,7 @@ echoRoutes.post('/:parentNoteId', async (c) => {
       timestamp: Date.now(),
       expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
       broadcaster: walletAddress,
-      sector: parentNote.sector,
+      sector: parentSector,
       tips: 0,
       echoes: 0,
       isEcho: true,

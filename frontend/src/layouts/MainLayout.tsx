@@ -154,8 +154,19 @@ export const MainLayout: React.FC = () => {
                 const echoData = uploadResponse.data;
                 console.log('[Echo] Upload complete:', echoData);
 
+                // Update the signal's echo count in the store
+                const { signals, setSignals, currentSignal } = useRadioStore.getState();
+                if (currentSignal) {
+                    const updatedSignals = signals.map(s =>
+                        s.id === currentSignal.id
+                            ? { ...s, echoes: (s.echoes || 0) + 1 }
+                            : s
+                    );
+                    setSignals(updatedSignals);
+                }
+
                 setMintingStatus('SUCCESS');
-                addToast(`Echo sent! ${echoData.txHash ? `TX: ${echoData.txHash.slice(0, 10)}...` : ''}`, 'SUCCESS');
+                addToast(`🔊 Echo sent to Signal #${currentSignal?.id?.substring(0, 6)}!`, 'SUCCESS');
 
                 // Reset after success
                 setTimeout(() => {

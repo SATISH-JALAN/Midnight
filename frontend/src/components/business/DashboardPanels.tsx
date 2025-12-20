@@ -85,61 +85,187 @@ export const SignalQueue: React.FC<SignalQueueProps> = ({ onCloseMobile }) => {
                     const isSignalPlaying = isActive && isPlaying;
 
                     return (
-                        <div
+                        <SignalCard
                             key={signal.id}
-                            onClick={(e) => handleItemClick(e, signal.id)}
-                            onMouseEnter={(e) => !isActive && handleItemHover(e, true)}
-                            onMouseLeave={(e) => !isActive && handleItemHover(e, false)}
-                            className={`
-                                group relative p-3 rounded border transition-all duration-300 cursor-pointer overflow-hidden
-                                ${isActive
-                                    ? 'active-signal bg-accent-cyan/5 border-l-4 border-l-accent-cyan border-y-accent-cyan/20 border-r-accent-cyan/20'
-                                    : 'bg-space-panel/40 border-l-4 border-l-transparent border-y-transparent border-r-transparent hover:bg-space-panel/80'
-                                }
-                            `}
-                        >
-                            <div className="flex justify-between items-center relative z-10">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <button
-                                        onClick={(e) => handleItemClick(e, signal.id)}
-                                        className={`w-8 h-8 rounded shrink-0 flex items-center justify-center transition-colors border ${isActive ? 'bg-accent-cyan text-black border-accent-cyan' : 'bg-black text-ui-dim border-ui-border group-hover:text-white group-hover:border-white/30'}`}
-                                    >
-                                        {isSignalPlaying ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" className="ml-0.5" />}
-                                    </button>
-
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-2 mb-0.5">
-                                            {isSignalPlaying && (
-                                                <div className="flex gap-0.5 h-2 items-end">
-                                                    <div className="w-0.5 bg-accent-cyan animate-[bounce_1s_infinite]" />
-                                                    <div className="w-0.5 bg-accent-cyan animate-[bounce_1.2s_infinite]" />
-                                                    <div className="w-0.5 bg-accent-cyan animate-[bounce_0.8s_infinite]" />
-                                                </div>
-                                            )}
-                                            <span className={`font-mono text-xs font-bold truncate ${isActive ? 'text-accent-cyan' : 'text-ui-text group-hover:text-white'}`}>
-                                                SIGNAL #{signal.id.substring(0, 4)}
-                                            </span>
-                                        </div>
-                                        <div className="font-mono text-[9px] text-ui-dim uppercase flex items-center gap-2 truncate">
-                                            <span>{signal.source || 'UNKNOWN'}</span>
-                                            <span className="w-1 h-1 rounded-full bg-ui-dim" />
-                                            <span className={`text-accent-${getMoodColor(signal.mood)}`}>{signal.mood}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="text-right shrink-0 pl-2">
-                                    <div className="font-mono text-[10px] text-ui-dim mb-1 bg-black/30 px-1.5 rounded">{signal.duration}</div>
-                                    <div className="flex items-center justify-end gap-2">
-                                        {signal.echoes > 0 && <div className="text-[9px] text-accent-purple font-mono flex items-center gap-1">🔊 {signal.echoes}</div>}
-                                        {signal.tips > 0 && <div className="text-[9px] text-accent-orange font-mono flex items-center gap-1"><Zap size={8} /> {signal.tips}</div>}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            signal={signal}
+                            isActive={isActive}
+                            isSignalPlaying={isSignalPlaying}
+                            handleItemClick={handleItemClick}
+                            handleItemHover={handleItemHover}
+                        />
                     );
                 })}
             </div>
+        </div>
+    );
+};
+
+// Signal Card with expandable echo list
+interface SignalCardProps {
+    signal: Signal;
+    isActive: boolean;
+    isSignalPlaying: boolean;
+    handleItemClick: (e: React.MouseEvent, id: string) => void;
+    handleItemHover: (e: React.MouseEvent, entering: boolean) => void;
+}
+
+const SignalCard: React.FC<SignalCardProps> = ({ signal, isActive, isSignalPlaying, handleItemClick, handleItemHover }) => {
+    const [showEchoes, setShowEchoes] = useState(false);
+    const [echoes, setEchoes] = useState<any[]>([]);
+    const [loadingEchoes, setLoadingEchoes] = useState(false);
+    const [playingEchoId, setPlayingEchoId] = useState<string | null>(null);
+    const echoAudioRef = useRef<HTMLAudioElement | null>(null);
+
+    const fetchEchoes = async () => {
+        if (showEchoes) {
+            setShowEchoes(false);
+            // Stop any playing echo when collapsing
+            if (echoAudioRef.current) {
+                echoAudioRef.current.pause();
+                setPlayingEchoId(null);
+            }
+            return;
+        }
+
+        setLoadingEchoes(true);
+        try {
+            const res = await fetch(`http://localhost:3001/api/echo/${signal.id}`);
+            const data = await res.json();
+            if (data.success && data.data?.echoes) {
+                setEchoes(data.data.echoes);
+            }
+        } catch (err) {
+            console.error('Failed to fetch echoes:', err);
+        } finally {
+            setLoadingEchoes(false);
+            setShowEchoes(true);
+        }
+    };
+
+    const toggleEchoPlay = (echo: any) => {
+        // If this echo is playing, pause it
+        if (playingEchoId === echo.noteId && echoAudioRef.current) {
+            echoAudioRef.current.pause();
+            setPlayingEchoId(null);
+            return;
+        }
+
+        // Stop current audio if any
+        if (echoAudioRef.current) {
+            echoAudioRef.current.pause();
+        }
+
+        // Create new audio and play
+        const audio = new Audio(echo.audioUrl);
+        audio.play();
+        echoAudioRef.current = audio;
+        setPlayingEchoId(echo.noteId);
+
+        // Reset when ended
+        audio.addEventListener('ended', () => {
+            setPlayingEchoId(null);
+        });
+    };
+
+    return (
+        <div
+            onClick={(e) => handleItemClick(e, signal.id)}
+            onMouseEnter={(e) => !isActive && handleItemHover(e, true)}
+            onMouseLeave={(e) => !isActive && handleItemHover(e, false)}
+            className={`
+                group relative p-3 rounded border transition-all duration-300 cursor-pointer overflow-hidden
+                ${isActive
+                    ? 'active-signal bg-accent-cyan/5 border-l-4 border-l-accent-cyan border-y-accent-cyan/20 border-r-accent-cyan/20'
+                    : 'bg-space-panel/40 border-l-4 border-l-transparent border-y-transparent border-r-transparent hover:bg-space-panel/80'
+                }
+            `}
+        >
+            <div className="flex justify-between items-center relative z-10">
+                <div className="flex items-center gap-3 min-w-0">
+                    <button
+                        onClick={(e) => handleItemClick(e, signal.id)}
+                        className={`w-8 h-8 rounded shrink-0 flex items-center justify-center transition-colors border ${isActive ? 'bg-accent-cyan text-black border-accent-cyan' : 'bg-black text-ui-dim border-ui-border group-hover:text-white group-hover:border-white/30'}`}
+                    >
+                        {isSignalPlaying ? <Pause size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" className="ml-0.5" />}
+                    </button>
+
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                            {isSignalPlaying && (
+                                <div className="flex gap-0.5 h-2 items-end">
+                                    <div className="w-0.5 bg-accent-cyan animate-[bounce_1s_infinite]" />
+                                    <div className="w-0.5 bg-accent-cyan animate-[bounce_1.2s_infinite]" />
+                                    <div className="w-0.5 bg-accent-cyan animate-[bounce_0.8s_infinite]" />
+                                </div>
+                            )}
+                            <span className={`font-mono text-xs font-bold truncate ${isActive ? 'text-accent-cyan' : 'text-ui-text group-hover:text-white'}`}>
+                                SIGNAL #{signal.id.substring(0, 4)}
+                            </span>
+                        </div>
+                        <div className="font-mono text-[9px] text-ui-dim uppercase flex items-center gap-2 truncate">
+                            <span>{signal.source || 'UNKNOWN'}</span>
+                            <span className="w-1 h-1 rounded-full bg-ui-dim" />
+                            <span className={`text-accent-${getMoodColor(signal.mood)}`}>{signal.mood}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="text-right shrink-0 pl-2">
+                    <div className="font-mono text-[10px] text-ui-dim mb-1 bg-black/30 px-1.5 rounded">{signal.duration}</div>
+                    <div className="flex items-center justify-end gap-2">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); fetchEchoes(); }}
+                            className={`text-[9px] font-mono flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors ${showEchoes ? 'bg-accent-purple text-black' : 'text-accent-purple hover:bg-accent-purple/20'
+                                }`}
+                        >
+                            🔊 {signal.echoes || 0}
+                        </button>
+                        {signal.tips > 0 && <div className="text-[9px] text-accent-orange font-mono flex items-center gap-1"><Zap size={8} /> {signal.tips}</div>}
+                    </div>
+                </div>
+            </div>
+
+            {/* Expandable Echo List */}
+            {showEchoes && (
+                <div className="mt-3 pt-3 border-t border-ui-border/30" onClick={(e) => e.stopPropagation()}>
+                    <div className="font-mono text-[9px] text-accent-purple mb-2 flex items-center gap-1">
+                        🔊 ECHOES ({echoes.length})
+                    </div>
+                    {loadingEchoes ? (
+                        <div className="text-[10px] text-ui-dim animate-pulse">Loading echoes...</div>
+                    ) : echoes.length === 0 ? (
+                        <div className="text-[10px] text-ui-dim">No echoes yet. Be the first to reply!</div>
+                    ) : (
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {echoes.map((echo: any) => {
+                                const isPlaying = playingEchoId === echo.noteId;
+                                return (
+                                    <div key={echo.noteId} className="flex items-center gap-2 p-2 bg-black/30 rounded">
+                                        <button
+                                            onClick={() => toggleEchoPlay(echo)}
+                                            className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${isPlaying
+                                                    ? 'bg-accent-purple text-black border-accent-purple'
+                                                    : 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple hover:bg-accent-purple hover:text-black'
+                                                }`}
+                                        >
+                                            {isPlaying ? <Pause size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" />}
+                                        </button>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-mono text-[9px] text-white truncate flex items-center gap-1">
+                                                Echo #{echo.noteId?.substring(0, 6)}
+                                                {isPlaying && <span className="text-accent-purple animate-pulse">▶</span>}
+                                            </div>
+                                            <div className="font-mono text-[8px] text-ui-dim">
+                                                {echo.duration}s • {echo.broadcaster?.substring(0, 8)}...
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

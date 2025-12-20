@@ -3,7 +3,7 @@ import { useRadioStore } from '@/store/useRadioStore';
 import { Signal, LeaderboardEntry } from '@/types';
 import { Play, TrendingUp, Trophy, Zap, Share2, Activity, Star } from 'lucide-react';
 import { gsap } from 'gsap';
-import { fetchStream, getAudioUrl } from '@/services/api';
+import { fetchStream } from '@/services/api';
 
 export const ExplorePage: React.FC = () => {
     const {
@@ -35,7 +35,7 @@ export const ExplorePage: React.FC = () => {
                         echoes: note.echoes,
                         hasAudio: true,
                         noteId: note.noteId,
-                        audioUrl: getAudioUrl(note.noteId),
+                        audioUrl: note.audioUrl,
                         broadcaster: note.broadcaster,
                         listenerCount: response.data?.totalListeners || 0,
                     }));
@@ -68,12 +68,12 @@ export const ExplorePage: React.FC = () => {
                         leaderboard: { topTipped, mostEchoed }
                     });
                 } else {
-                    // Fallback to mock if no data
-                    loadMockData();
+                    // No data from API - empty state will be shown
+                    console.log('[Explore] No signals from API');
                 }
             } catch (err) {
                 console.error('Failed to fetch explore data:', err);
-                loadMockData();
+                // No fallback to mock - just show empty state
             } finally {
                 setIsLoading(false);
             }
@@ -81,34 +81,6 @@ export const ExplorePage: React.FC = () => {
 
         loadExploreData();
     }, []);
-
-    // Fallback mock data
-    const loadMockData = () => {
-        const mocks: Signal[] = Array.from({ length: 5 }).map((_, i) => ({
-            id: `trend-${i}`,
-            source: `Sector ${['9X', 'Alpha', 'Void', 'Deep'][i % 4]}`,
-            frequency: 880 + i * 20,
-            duration: "03:22",
-            timestamp: new Date().toISOString(),
-            mood: ['EXCITED', 'URGENT', 'MYSTERIOUS'][i % 3] as any,
-            tips: 42 + i * 10,
-            echoes: 15 + i * 5,
-            hasAudio: false
-        }));
-
-        const entries: LeaderboardEntry[] = Array.from({ length: 5 }).map((_, i) => ({
-            rank: i + 1,
-            signalId: `sig-${i}`,
-            sector: `Sector ${['A', 'B', 'C'][i % 3]}`,
-            value: 1000 - i * 50,
-            trend: i === 0 ? 'up' : i === 4 ? 'down' : 'neutral'
-        }));
-
-        useRadioStore.setState({
-            trendingSignals: mocks,
-            leaderboard: { topTipped: entries, mostEchoed: entries }
-        });
-    };
 
     const handlePlay = (signal: Signal) => {
         setCurrentSignal(signal);

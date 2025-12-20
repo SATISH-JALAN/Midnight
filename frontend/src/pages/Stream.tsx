@@ -3,7 +3,7 @@ import { useRadioStore } from '@/store/useRadioStore';
 import { TelescopeInterface } from '@/components/business/TelescopeInterface';
 import { SignalQueue, StatsPanel } from '@/components/business/DashboardPanels';
 import { Signal } from '@/types';
-import { fetchStream, getAudioUrl } from '@/services/api';
+import { fetchStream } from '@/services/api';
 import { useAccount } from 'wagmi';
 import { WalletGate } from '@/components/WalletGate';
 import { useStreamAudio } from '@/hooks/useStreamAudio';
@@ -46,7 +46,7 @@ export const StreamPage: React.FC = () => {
                         hasAudio: true,
                         // Custom fields for playback
                         noteId: note.noteId,
-                        audioUrl: getAudioUrl(note.noteId),
+                        audioUrl: note.audioUrl,
                         broadcaster: note.broadcaster,
                         expiresAt: note.expiresAt,
                         moodColor: note.moodColor,

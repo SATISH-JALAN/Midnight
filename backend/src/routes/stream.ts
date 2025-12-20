@@ -1,29 +1,71 @@
 import { Hono } from 'hono';
 import { queueManager } from '../services/QueueManager.js';
 import { wsManager } from '../services/WebSocketManager.js';
+import { blockchainService } from '../services/BlockchainService.js';
+import { logger } from '../config/logger.js';
+import type { Note } from '../types/index.js';
 
 export const streamRoutes = new Hono();
 
 /**
  * GET /api/stream
- * Returns the list of active (non-expired) voice notes
- * Echoes are filtered out - they appear as replies, not standalone broadcasts
+ * Returns the list of active voice notes
+ * Merges in-memory queue with blockchain NFTs for persistence
  */
-streamRoutes.get('/', (c) => {
-  const allNotes = queueManager.getActiveQueue();
-  // Filter out echoes - they should only appear as replies under their parent
-  const notes = allNotes.filter(note => !note.isEcho);
-  const stats = queueManager.getStats();
+streamRoutes.get('/', async (c) => {
+  try {
+    // Get notes from in-memory queue (recent uploads, not yet on chain)
+    const queueNotes = queueManager.getActiveQueue().filter(note => !note.isEcho);
+    const queueNoteIds = new Set(queueNotes.map(n => n.noteId));
 
-  return c.json({
-    success: true,
-    data: {
-      notes,
-      totalListeners: wsManager.getClientCount(),
-      activeNotes: stats.active,
-      serverTime: Date.now(),
-    },
-  });
+    // Also fetch NFTs from blockchain for persistence across restarts
+    const blockchainNfts = await blockchainService.getAllNFTs(20);
+    
+    // Convert blockchain NFTs to Note format and merge
+    const blockchainNotes: Note[] = blockchainNfts
+      .filter(nft => !queueNoteIds.has(nft.noteId)) // Avoid duplicates
+      .map(nft => ({
+        noteId: nft.noteId,
+        tokenId: parseInt(nft.tokenId) || 0,
+        audioUrl: nft.audioUrl || '',
+        metadataUrl: nft.tokenURI || '',
+        duration: nft.duration || 0,
+        moodColor: nft.moodColor || '#0EA5E9',
+        waveform: nft.waveform || [],
+        timestamp: nft.createdAt ? new Date(nft.createdAt).getTime() : Date.now(),
+        expiresAt: nft.expiresAt ? new Date(nft.expiresAt).getTime() : Date.now() + 86400000,
+        broadcaster: nft.owner || '',
+        sector: nft.sector || 'Unknown Sector',
+        tips: nft.tips || 0,
+        echoes: nft.echoes || 0,
+      }));
+
+    // Merge: in-memory first (freshest), then blockchain
+    const allNotes = [...queueNotes, ...blockchainNotes];
+
+    return c.json({
+      success: true,
+      data: {
+        notes: allNotes,
+        totalListeners: wsManager.getClientCount(),
+        activeNotes: allNotes.length,
+        serverTime: Date.now(),
+      },
+    });
+  } catch (err) {
+    logger.error({ err }, 'Failed to fetch stream');
+    // Fallback to queue only
+    const notes = queueManager.getActiveQueue().filter(note => !note.isEcho);
+    return c.json({
+      success: true,
+      data: {
+        notes,
+        totalListeners: wsManager.getClientCount(),
+        activeNotes: notes.length,
+        serverTime: Date.now(),
+      },
+    });
+  }
 });
 
 /**
