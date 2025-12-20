@@ -4,6 +4,8 @@ import { TelescopeInterface } from '@/components/business/TelescopeInterface';
 import { SignalQueue, StatsPanel } from '@/components/business/DashboardPanels';
 import { Signal } from '@/types';
 import { fetchStream, getAudioUrl } from '@/services/api';
+import { useAccount } from 'wagmi';
+import { WalletGate } from '@/components/WalletGate';
 
 export const StreamPage: React.FC = () => {
     const {

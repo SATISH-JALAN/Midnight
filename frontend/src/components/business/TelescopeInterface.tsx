@@ -4,6 +4,7 @@ import { Play, Square, SkipForward, SkipBack, DollarSign, Share2, Mic, Activity,
 import { gsap } from 'gsap';
 
 import { useRadioStore } from '@/store/useRadioStore';
+import { useWalletGate } from '@/components/WalletGate';
 
 interface TelescopeInterfaceProps {
   onToggleQueue?: () => void;
@@ -21,10 +22,12 @@ export const TelescopeInterface: React.FC<TelescopeInterfaceProps> = ({
     setCurrentSignal
   } = useRadioStore();
 
-  const onPlayPause = () => setIsPlaying(!isPlaying);
-  const onRecordStart = () => setModal('RECORD');
-  const onTip = () => setModal('TIP');
-  const onEcho = () => setModal('ECHO');
+  const { requireWallet } = useWalletGate();
+
+  const onPlayPause = () => requireWallet(() => setIsPlaying(!isPlaying));
+  const onRecordStart = () => requireWallet(() => setModal('RECORD'));
+  const onTip = () => requireWallet(() => setModal('TIP'));
+  const onEcho = () => requireWallet(() => setModal('ECHO'));
 
   const onNext = () => {
     if (!currentSignal || signals.length === 0) return;

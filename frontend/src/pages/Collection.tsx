@@ -4,6 +4,7 @@ import { Gallery } from '@/components/business/Gallery';
 import { VoiceNoteNFT } from '@/types';
 import { fetchCollection, CollectionNFT } from '@/services/api';
 import { useAccount } from 'wagmi';
+import { WalletGate } from '@/components/WalletGate';
 
 export const CollectionPage: React.FC = () => {
     const { address, isConnected } = useAccount();
@@ -74,20 +75,10 @@ export const CollectionPage: React.FC = () => {
         useRadioStore.getState().setModal('NFT_DETAIL', { nft });
     };
 
-    // Not connected state
+    // Not connected state - use WalletGate for consistent UI
     if (!isConnected) {
         return (
-            <div className="flex-1 h-full min-h-0 relative flex flex-col items-center justify-center">
-                <div className="text-center p-8">
-                    <div className="font-mono text-ui-dim text-sm mb-4">
-                        CONNECT WALLET TO VIEW YOUR COLLECTION
-                    </div>
-                    <div className="text-6xl opacity-20 mb-4">📡</div>
-                    <p className="text-ui-dim/60 text-xs">
-                        Your voice note NFTs will appear here
-                    </p>
-                </div>
-            </div>
+            <WalletGate message="Connect your wallet to view your NFT collection and transmissions" />
         );
     }
 

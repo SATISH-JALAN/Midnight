@@ -4,6 +4,7 @@ import { Mic, Radio, Signal, Wifi, Lock, Cpu, Globe, Zap, Sparkles, Activity, Us
 import { gsap } from 'gsap';
 import { cn } from '@/lib/utils';
 import { useAccount } from 'wagmi';
+import { WalletGate } from '@/components/WalletGate';
 
 export const BroadcastPage: React.FC = () => {
     const {
@@ -69,6 +70,13 @@ export const BroadcastPage: React.FC = () => {
 
         return () => ctx.revert();
     }, [isRecording]);
+
+    // If not connected, show WalletGate (AFTER all hooks!)
+    if (!isConnected) {
+        return (
+            <WalletGate message="Connect your wallet to broadcast voice notes and mint them as NFTs on Mantle" />
+        );
+    }
 
 
     return (
