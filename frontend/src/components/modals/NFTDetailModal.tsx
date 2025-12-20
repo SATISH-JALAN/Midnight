@@ -1,33 +1,153 @@
-import React from 'react';
-import { X, ExternalLink, Play, Clock, Share2, Tag } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, ExternalLink, Play, Pause, Clock, Tag, Volume2 } from 'lucide-react';
 import { VoiceNoteNFT } from '@/types';
+import { VOICE_NOTE_NFT_ADDRESS } from '@/lib/contracts';
 
 interface NFTDetailModalProps {
     onClose: () => void;
     nft?: VoiceNoteNFT | null;
 }
 
+// Extended NFT type with audio data from collection
+interface ExtendedNFT extends VoiceNoteNFT {
+    audioUrl?: string;
+    duration?: number;
+    moodColor?: string;
+    waveform?: number[];
+    tips?: number;
+    echoes?: number;
+}
+
 export const NFTDetailModal: React.FC<NFTDetailModalProps> = ({ onClose, nft }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
     if (!nft) return null;
+
+    // Cast to extended type to access audio properties
+    const extendedNft = nft as ExtendedNFT;
 
     // Helper to extract attributes safely
     const getAttr = (key: string) => nft.metadata.attributes?.find(a => a.trait_type === key)?.value || 'Unknown';
+
+    // Get audio URL from metadata or extended properties
+    const audioUrl = extendedNft.audioUrl || (nft.metadata as any)?.audioUrl;
+
+    // Build Mantle Explorer URL
+    // If we have a numeric tokenId, link to the NFT. Otherwise link to the contract.
+    const tokenIdNum = parseInt(nft.tokenId);
+    const explorerUrl = !isNaN(tokenIdNum) && tokenIdNum > 0
+        ? `https://sepolia.mantlescan.xyz/token/${VOICE_NOTE_NFT_ADDRESS}?a=${tokenIdNum}`
+        : `https://sepolia.mantlescan.xyz/address/${VOICE_NOTE_NFT_ADDRESS}`;
+
+    // Audio playback handlers
+    const togglePlayback = () => {
+        if (!audioUrl) {
+            console.error('[NFTDetail] No audio URL available');
+            return;
+        }
+
+        if (!audioRef.current) {
+            audioRef.current = new Audio(audioUrl);
+            audioRef.current.addEventListener('timeupdate', () => {
+                setCurrentTime(audioRef.current?.currentTime || 0);
+            });
+            audioRef.current.addEventListener('loadedmetadata', () => {
+                setDuration(audioRef.current?.duration || 0);
+            });
+            audioRef.current.addEventListener('ended', () => {
+                setIsPlaying(false);
+                setCurrentTime(0);
+            });
+            audioRef.current.addEventListener('error', (e) => {
+                console.error('[NFTDetail] Audio error:', e);
+                setIsPlaying(false);
+            });
+        }
+
+        if (isPlaying) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            audioRef.current.play().catch(err => {
+                console.error('[NFTDetail] Failed to play:', err);
+            });
+            setIsPlaying(true);
+        }
+    };
+
+    // Cleanup audio on unmount
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
+    }, []);
+
+    // Format time as MM:SS
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Get duration from metadata or audio
+    const displayDuration = extendedNft.duration || duration || getAttr('Duration');
 
     return (
         <div className="w-full max-w-2xl bg-space-navy border border-ui-border rounded-xl overflow-hidden relative flex flex-col md:flex-row h-[500px] shadow-2xl">
             <button onClick={onClose} className="absolute top-4 right-4 z-10 text-white bg-black/40 p-1.5 rounded-full hover:bg-white/20 transition-colors backdrop-blur"><X size={18} /></button>
 
-            {/* Left: Visual */}
+            {/* Left: Visual & Player */}
             <div className="w-full md:w-1/2 bg-black/40 relative flex items-center justify-center p-8 bg-[url('https://images.unsplash.com/photo-1614726365723-49fa5389a37a?q=80&w=2574')] bg-cover bg-center">
                 <div className="absolute inset-0 bg-space-navy/60 backdrop-blur-sm" />
 
                 <div className="relative z-10 text-center">
-                    <button className="w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:scale-110 transition-transform mb-6 backdrop-blur-md shadow-[0_0_30px_rgba(6,182,212,0.3)] group">
-                        <Play fill="white" className="ml-1 md:w-8 md:h-8 group-hover:text-accent-cyan transition-colors" />
+                    {/* Play Button */}
+                    <button
+                        onClick={togglePlayback}
+                        disabled={!audioUrl}
+                        className={`w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:scale-110 transition-transform mb-4 backdrop-blur-md shadow-[0_0_30px_rgba(6,182,212,0.3)] group ${!audioUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {isPlaying ? (
+                            <Pause fill="white" className="w-8 h-8 text-white" />
+                        ) : (
+                            <Play fill="white" className="ml-1 w-8 h-8 group-hover:text-accent-cyan transition-colors" />
+                        )}
                     </button>
+
+                    {/* Playback Progress */}
+                    {audioUrl && (
+                        <div className="mb-4 w-full px-4">
+                            <div className="flex items-center gap-2 text-[10px] font-mono text-ui-dim">
+                                <span>{formatTime(currentTime)}</span>
+                                <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-accent-cyan transition-all duration-200"
+                                        style={{ width: duration > 0 ? `${(currentTime / duration) * 100}%` : '0%' }}
+                                    />
+                                </div>
+                                <span>{typeof displayDuration === 'number' ? formatTime(displayDuration) : displayDuration}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Signal ID Badge */}
                     <div className="font-mono text-xs text-accent-cyan tracking-widest bg-black/40 px-3 py-1 rounded-full border border-accent-cyan/30 inline-block">
-                        SIGNAL #{nft.tokenId}
+                        SIGNAL #{nft.tokenId.substring(0, 6)}
                     </div>
+
+                    {/* No Audio Warning */}
+                    {!audioUrl && (
+                        <div className="mt-4 text-[10px] text-ui-dim/60 font-mono">
+                            <Volume2 size={12} className="inline mr-1" />
+                            Audio not available
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -60,6 +180,12 @@ export const NFTDetailModal: React.FC<NFTDetailModalProps> = ({ onClose, nft }) 
                         <span className="text-ui-dim">Sector</span>
                         <span className="font-mono text-white">{getAttr('Sector')}</span>
                     </div>
+                    {extendedNft.tips !== undefined && extendedNft.tips > 0 && (
+                        <div className="flex justify-between items-center border-b border-ui-border/30 pb-2">
+                            <span className="text-ui-dim">Tips Received</span>
+                            <span className="font-mono text-accent-orange">{extendedNft.tips} MNT</span>
+                        </div>
+                    )}
                     {nft.price && (
                         <div className="flex justify-between items-center pt-1">
                             <span className="text-ui-dim">Price</span>
@@ -69,7 +195,9 @@ export const NFTDetailModal: React.FC<NFTDetailModalProps> = ({ onClose, nft }) 
                 </div>
 
                 <a
-                    href="#" // Mock explorer link
+                    href={explorerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-full py-3 mt-6 border border-ui-border text-ui-dim hover:text-white hover:border-accent-cyan hover:bg-accent-cyan/5 rounded flex items-center justify-center gap-2 text-xs font-mono font-bold tracking-wider transition-all"
                 >
                     VIEW ON MANTLE EXPLORER <ExternalLink size={12} />

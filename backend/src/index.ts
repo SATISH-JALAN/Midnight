@@ -7,6 +7,7 @@ import { healthRoutes } from './routes/health.js';
 import { uploadRoutes } from './routes/upload.js';
 import { streamRoutes } from './routes/stream.js';
 import { audioRoutes } from './routes/audio.js';
+import { collectionRoutes } from './routes/collection.js';
 import { wsManager } from './services/WebSocketManager.js';
 
 // Create Hono app
@@ -21,6 +22,7 @@ app.route('/health', healthRoutes);
 app.route('/api/upload', uploadRoutes);
 app.route('/api/stream', streamRoutes);
 app.route('/api/audio', audioRoutes);
+app.route('/api/collection', collectionRoutes);
 
 // Root endpoint
 app.get('/', (c) => {

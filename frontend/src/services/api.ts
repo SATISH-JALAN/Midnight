@@ -99,3 +99,67 @@ export async function checkHealth(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Collection NFT item interface
+ */
+export interface CollectionNFT {
+  tokenId: string;
+  noteId: string;
+  creator: string;
+  owner: string;
+  tokenURI: string;
+  audioUrl: string;
+  metadata: {
+    name: string;
+    description: string;
+    image: string;
+    audioUrl: string;
+    duration: number;
+    moodColor: string;
+    waveform: number[];
+    attributes: { trait_type: string; value: string | number }[];
+  };
+  isListed: boolean;
+  price?: string;
+  createdAt: string;
+  expiresAt: string;
+  tips: number;
+  echoes: number;
+}
+
+export interface CollectionResponse {
+  success: boolean;
+  data?: {
+    address?: string;
+    nfts: CollectionNFT[];
+    totalCount: number;
+  };
+  error?: string;
+}
+
+/**
+ * Fetch user's NFT collection
+ */
+export async function fetchCollection(walletAddress: string): Promise<CollectionResponse> {
+  try {
+    const response = await fetch(`${API_BASE}/api/collection/${walletAddress}`);
+    return response.json();
+  } catch (err) {
+    console.error('[API] Failed to fetch collection:', err);
+    return { success: false, error: 'Failed to fetch collection' };
+  }
+}
+
+/**
+ * Fetch all NFTs (for explore)
+ */
+export async function fetchAllNFTs(): Promise<CollectionResponse> {
+  try {
+    const response = await fetch(`${API_BASE}/api/collection`);
+    return response.json();
+  } catch (err) {
+    console.error('[API] Failed to fetch all NFTs:', err);
+    return { success: false, error: 'Failed to fetch NFTs' };
+  }
+}

@@ -8,9 +8,11 @@ import { ParticleField, ChannelSwitchOverlay } from '@/components/ui/Effects';
 import { useRadioStore } from '@/store/useRadioStore';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useNFTMint } from '@/hooks/useNFTMint';
 import { useWebSocket } from '@/services/useWebSocket';
 import { uploadAudio } from '@/services/api';
-import { useAccount } from 'wagmi';
+import { useAccount, useSwitchChain } from 'wagmi';
+import { MANTLE_SEPOLIA_CHAIN_ID } from '@/lib/contracts';
 
 export const MainLayout: React.FC = () => {
     const navigate = useNavigate();
@@ -19,7 +21,11 @@ export const MainLayout: React.FC = () => {
     const { openConnectModal } = useConnectModal();
     const recorder = useAudioRecorder();
     const { isConnected: wsConnected } = useWebSocket();
-    const { address, isConnected: walletConnected } = useAccount();
+    const { address, isConnected: walletConnected, chainId } = useAccount();
+    const { switchChainAsync } = useSwitchChain();
+
+    // NFT Minting hook
+    const nftMint = useNFTMint(address);
 
     const {
         wallet,
@@ -94,7 +100,7 @@ export const MainLayout: React.FC = () => {
         }
     };
 
-    // Handle Upload/Mint
+    // Handle Upload and Mint with client-side transaction signing
     const handleMint = async () => {
         if (!recorder.audioBlob) {
             addToast('No recording to upload', 'ERROR');
@@ -102,31 +108,55 @@ export const MainLayout: React.FC = () => {
         }
 
         // Check wallet connection
-        const walletAddress = address || wallet.address;
-        if (!walletAddress) {
+        if (!address || !walletConnected) {
             addToast('Please connect your wallet first', 'ERROR');
-            setModal('WALLET');
+            if (openConnectModal) {
+                openConnectModal();
+            }
             return;
         }
 
         try {
-            setMintingStatus('COMPRESSING');
-
-            // Upload to backend
-            setMintingStatus('IPFS_UPLOAD');
-            const response = await uploadAudio(recorder.audioBlob, walletAddress);
-
-            if (!response.success) {
-                throw new Error(response.error || 'Upload failed');
+            // Step 1: Check and switch to Mantle Sepolia if needed
+            if (chainId !== MANTLE_SEPOLIA_CHAIN_ID) {
+                setMintingStatus('COMPRESSING'); // Use as "switching network" state
+                addToast('Switching to Mantle Sepolia...', 'INFO');
+                try {
+                    await switchChainAsync({ chainId: MANTLE_SEPOLIA_CHAIN_ID });
+                } catch (switchErr: any) {
+                    throw new Error('Please switch to Mantle Sepolia network');
+                }
             }
 
+            // Step 2: Upload audio to IPFS via backend
+            setMintingStatus('IPFS_UPLOAD');
+            console.log('[Mint] Uploading to IPFS...');
+
+            const uploadResponse = await uploadAudio(recorder.audioBlob, address);
+            if (!uploadResponse.success) {
+                throw new Error(uploadResponse.error || 'Upload failed');
+            }
+
+            const { noteId, metadataUrl } = uploadResponse.data;
+            console.log('[Mint] IPFS upload complete:', { noteId, metadataUrl });
+
+            // Step 3: Prompt user to sign transaction
+            setMintingStatus('AWAITING_SIGNATURE');
+            addToast('Please confirm transaction in MetaMask...', 'INFO');
+
+            // Step 4: Mint NFT on-chain
             setMintingStatus('MINTING');
+            const mintResult = await nftMint.mint(noteId, metadataUrl);
 
-            // Small delay to show minting status
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            if (!mintResult.success) {
+                throw new Error(mintResult.error || 'Minting failed');
+            }
 
+            console.log('[Mint] NFT minted! TX:', mintResult.txHash);
+
+            // Step 5: Success!
             setMintingStatus('SUCCESS');
-            addToast('Transmission broadcast successfully!', 'SUCCESS');
+            addToast(`Transmission broadcast! TX: ${mintResult.txHash.slice(0, 10)}...`, 'SUCCESS');
 
             // Reset after success
             setTimeout(() => {
@@ -136,8 +166,8 @@ export const MainLayout: React.FC = () => {
             }, 2000);
 
         } catch (err: any) {
-            console.error('Upload error:', err);
-            addToast(err.message || 'Upload failed', 'ERROR');
+            console.error('[Mint] Error:', err);
+            addToast(err.message || 'Minting failed', 'ERROR');
             setMintingStatus('IDLE');
         }
     };

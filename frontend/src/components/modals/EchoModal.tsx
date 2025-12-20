@@ -104,12 +104,31 @@ export const EchoModal: React.FC<EchoModalProps> = ({
                     </div>
 
                     <div className="space-y-4 w-full max-w-xs">
-                        {['COMPRESSING', 'IPFS_UPLOAD', 'AWAITING_SIGNATURE', 'MINTING'].map((step) => (
-                            <div key={step} className={`flex items-center gap-3 font-mono text-xs text-ui-dim`}>
-                                <div className={`w-4 h-4 rounded-full border border-ui-dim`}></div>
-                                <span>{step}</span>
-                            </div>
-                        ))}
+                        {(['COMPRESSING', 'IPFS_UPLOAD', 'AWAITING_SIGNATURE', 'MINTING'] as const).map((step, index) => {
+                            const steps = ['COMPRESSING', 'IPFS_UPLOAD', 'AWAITING_SIGNATURE', 'MINTING'];
+                            const currentIndex = steps.indexOf(mintingStatus);
+                            const isComplete = index < currentIndex || mintingStatus === 'SUCCESS';
+                            const isCurrent = step === mintingStatus;
+                            const stepLabels: Record<string, string> = {
+                                'COMPRESSING': 'PREPARING...',
+                                'IPFS_UPLOAD': 'UPLOADING TO IPFS',
+                                'AWAITING_SIGNATURE': 'CONFIRM IN WALLET',
+                                'MINTING': 'MINTING NFT',
+                            };
+
+                            return (
+                                <div key={step} className={`flex items-center gap-3 font-mono text-xs transition-colors ${isComplete ? 'text-accent-phosphor' :
+                                        isCurrent ? 'text-white' : 'text-ui-dim'
+                                    }`}>
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isComplete ? 'border-accent-phosphor bg-accent-phosphor' :
+                                            isCurrent ? 'border-white animate-pulse' : 'border-ui-dim'
+                                        }`}>
+                                        {isComplete && <span className="text-[8px] text-black font-bold">✓</span>}
+                                    </div>
+                                    <span>{stepLabels[step] || step}</span>
+                                </div>
+                            );
+                        })}
                     </div>
 
                     {mintingStatus === 'SUCCESS' && (
