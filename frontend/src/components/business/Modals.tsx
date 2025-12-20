@@ -12,6 +12,7 @@ interface ModalsProps {
    onWalletConfirm: () => void;
    isRecording: boolean;
    recordingTime: number;
+   audioUrl: string | null;
    onRecordStart: () => void;
    onRecordStop: () => void;
    onMint: () => void;
@@ -26,6 +27,7 @@ export const Modals: React.FC<ModalsProps> = ({
    onWalletConfirm,
    isRecording,
    recordingTime,
+   audioUrl,
    onRecordStart,
    onRecordStop,
    onMint,
@@ -77,6 +79,7 @@ export const Modals: React.FC<ModalsProps> = ({
                   onClose={onClose}
                   isRecording={isRecording}
                   recordingTime={recordingTime}
+                  audioUrl={audioUrl}
                   onRecordStart={onRecordStart}
                   onRecordStop={onRecordStop}
                   onMint={onMint}
@@ -94,6 +97,7 @@ export const Modals: React.FC<ModalsProps> = ({
                   onClose={onClose}
                   isRecording={isRecording}
                   recordingTime={recordingTime}
+                  audioUrl={audioUrl}
                   onRecordStart={onRecordStart}
                   onRecordStop={onRecordStop}
                   onMint={onMint}

@@ -8,6 +8,9 @@ import { ParticleField, ChannelSwitchOverlay } from '@/components/ui/Effects';
 import { useRadioStore } from '@/store/useRadioStore';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useWebSocket } from '@/services/useWebSocket';
+import { uploadAudio } from '@/services/api';
+import { useAccount } from 'wagmi';
 
 export const MainLayout: React.FC = () => {
     const navigate = useNavigate();
@@ -15,6 +18,8 @@ export const MainLayout: React.FC = () => {
     const [transitionTrigger, setTransitionTrigger] = useState(0);
     const { openConnectModal } = useConnectModal();
     const recorder = useAudioRecorder();
+    const { isConnected: wsConnected } = useWebSocket();
+    const { address, isConnected: walletConnected } = useAccount();
 
     const {
         wallet,
@@ -24,8 +29,9 @@ export const MainLayout: React.FC = () => {
         currentSignal,
         isRecording,
         recordingTime,
-        command,           // Get command
-        triggerCommand,    // Get trigger
+        listenerCount,
+        command,
+        triggerCommand,
         setWallet,
         setModal,
         setActiveView,
@@ -52,7 +58,7 @@ export const MainLayout: React.FC = () => {
         // Remote Command Handling
         if (command === 'STOP_RECORDING' && recorder.isRecording) {
             recorder.stopRecording();
-            triggerCommand('NONE'); // Reset
+            triggerCommand('NONE');
         }
     }, [recorder.isRecording, recorder.recordingTime, setIsRecording, setRecordingTime, command, triggerCommand, recorder.stopRecording]);
 
@@ -64,6 +70,13 @@ export const MainLayout: React.FC = () => {
         if (activeView === 'EXPLORE') navigate('/explore');
         if (activeView === 'SETTINGS') navigate('/settings');
     }, [activeView, navigate]);
+
+    // Sync wallet connection state
+    React.useEffect(() => {
+        if (walletConnected && address) {
+            setWallet({ isConnected: true, address, balance: '0' });
+        }
+    }, [walletConnected, address, setWallet]);
 
     const handleConnectWallet = () => {
         if (openConnectModal) {
@@ -81,6 +94,54 @@ export const MainLayout: React.FC = () => {
         }
     };
 
+    // Handle Upload/Mint
+    const handleMint = async () => {
+        if (!recorder.audioBlob) {
+            addToast('No recording to upload', 'ERROR');
+            return;
+        }
+
+        // Check wallet connection
+        const walletAddress = address || wallet.address;
+        if (!walletAddress) {
+            addToast('Please connect your wallet first', 'ERROR');
+            setModal('WALLET');
+            return;
+        }
+
+        try {
+            setMintingStatus('COMPRESSING');
+
+            // Upload to backend
+            setMintingStatus('IPFS_UPLOAD');
+            const response = await uploadAudio(recorder.audioBlob, walletAddress);
+
+            if (!response.success) {
+                throw new Error(response.error || 'Upload failed');
+            }
+
+            setMintingStatus('MINTING');
+
+            // Small delay to show minting status
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            setMintingStatus('SUCCESS');
+            addToast('Transmission broadcast successfully!', 'SUCCESS');
+
+            // Reset after success
+            setTimeout(() => {
+                setMintingStatus('IDLE');
+                setModal('NONE');
+                recorder.resetRecording();
+            }, 2000);
+
+        } catch (err: any) {
+            console.error('Upload error:', err);
+            addToast(err.message || 'Upload failed', 'ERROR');
+            setMintingStatus('IDLE');
+        }
+    };
+
     return (
         <div className="relative w-screen h-screen bg-space-black text-ui-text font-sans overflow-hidden flex flex-col selection:bg-accent-phosphor selection:text-black">
             <ChannelSwitchOverlay trigger={transitionTrigger} />
@@ -93,7 +154,7 @@ export const MainLayout: React.FC = () => {
             {/* Main Container */}
             <div className="relative z-10 flex flex-col h-full max-w-[1600px] mx-auto w-full">
                 <Header
-                    listenerCount={42}
+                    listenerCount={listenerCount}
                 />
 
                 <main className="flex-1 flex flex-col md:flex-row min-h-0 relative">
@@ -109,9 +170,10 @@ export const MainLayout: React.FC = () => {
                 onWalletConfirm={handleWalletConfirm}
                 isRecording={recorder.isRecording}
                 recordingTime={recorder.recordingTime}
+                audioUrl={recorder.audioUrl}
                 onRecordStart={recorder.startRecording}
                 onRecordStop={recorder.stopRecording}
-                onMint={() => { }}
+                onMint={handleMint}
                 mintingStatus={mintingStatus}
                 currentSignal={currentSignal}
                 modalProps={modalProps}

@@ -1,45 +1,100 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRadioStore } from '@/store/useRadioStore';
 import { TelescopeInterface } from '@/components/business/TelescopeInterface';
 import { SignalQueue, StatsPanel } from '@/components/business/DashboardPanels';
 import { Signal } from '@/types';
-
-// Mock signals for now, until we fetch from store initialized state
-// Actually store is empty initially in useRadioStore, we might need to seed it or fetch it.
-// For now, let's generate them here or in a useEffect that populates store.
+import { fetchStream, getAudioUrl } from '@/services/api';
 
 export const StreamPage: React.FC = () => {
     const {
         signals,
         currentSignal,
         isPlaying,
+        listenerCount,
+        setSignals,
+        setCurrentSignal,
+        addToast,
     } = useRadioStore();
 
     const [showMobileQueue, setShowMobileQueue] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const setCurrentSignal = useRadioStore(state => state.setCurrentSignal);
+    // Fetch real stream data from backend
+    useEffect(() => {
+        const loadStream = async () => {
+            try {
+                setIsLoading(true);
+                const response = await fetchStream();
 
-    // Initialize signals (Simulated hook)
-    React.useEffect(() => {
-        if (signals.length === 0) {
-            // Generate mock
-            const SECTORS = ['7G-Delta', '2A-Echo', '9F-Whisper', '4X-Void'];
-            const MOODS = ['CALM', 'EXCITED', 'MYSTERIOUS', 'URGENT', 'VOID'] as const;
-            const mocks: Signal[] = Array.from({ length: 8 }).map((_, i) => ({
-                id: Math.floor(Math.random() * 10000 + 1000).toString(),
-                source: SECTORS[Math.floor(Math.random() * SECTORS.length)],
-                frequency: 432.0 + i,
-                duration: `0${Math.floor(1 + i / 2)}:${(30 + i * 5) % 60}`, // "01:30" format
-                timestamp: new Date().toISOString(),
-                mood: MOODS[i % MOODS.length],
-                tips: 0,
-                echoes: 0,
-                broadcasterAddress: '0x123...abc'
-            }));
-            useRadioStore.getState().setSignals(mocks);
-            useRadioStore.getState().setCurrentSignal(mocks[0]);
-        }
+                if (response.success && response.data) {
+                    // Convert backend notes to frontend Signal format
+                    const convertedSignals: Signal[] = response.data.notes.map((note) => ({
+                        id: note.noteId,
+                        source: note.sector,
+                        frequency: 432.0 + Math.random() * 100,
+                        duration: `${Math.floor(note.duration / 60)}:${(note.duration % 60).toString().padStart(2, '0')}`,
+                        timestamp: new Date(note.timestamp).toISOString(),
+                        mood: getMoodFromColor(note.moodColor),
+                        tips: note.tips,
+                        echoes: note.echoes,
+                        hasAudio: true,
+                        // Custom fields for playback
+                        noteId: note.noteId,
+                        audioUrl: getAudioUrl(note.noteId),
+                        broadcaster: note.broadcaster,
+                        expiresAt: note.expiresAt,
+                        moodColor: note.moodColor,
+                        waveform: note.waveform,
+                    }));
+
+                    setSignals(convertedSignals);
+
+                    // Set first signal as current if none selected
+                    if (convertedSignals.length > 0 && !currentSignal) {
+                        setCurrentSignal(convertedSignals[0]);
+                    }
+
+                    // Update listener count from server
+                    if (response.data.totalListeners !== undefined) {
+                        useRadioStore.setState({ listenerCount: response.data.totalListeners });
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch stream:', err);
+                // Use mock data as fallback
+                loadMockData();
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadStream();
+
+        // Refresh every 30 seconds
+        const interval = setInterval(loadStream, 30000);
+        return () => clearInterval(interval);
     }, []);
+
+    // Fallback mock data
+    const loadMockData = () => {
+        const SECTORS = ['7G-Delta', '2A-Echo', '9F-Whisper', '4X-Void'];
+        const MOODS = ['CALM', 'EXCITED', 'MYSTERIOUS', 'URGENT', 'VOID'] as const;
+        const mocks: Signal[] = Array.from({ length: 4 }).map((_, i) => ({
+            id: Math.floor(Math.random() * 10000 + 1000).toString(),
+            source: SECTORS[Math.floor(Math.random() * SECTORS.length)],
+            frequency: 432.0 + i,
+            duration: `0${Math.floor(1 + i / 2)}:${(30 + i * 5) % 60}`,
+            timestamp: new Date().toISOString(),
+            mood: MOODS[i % MOODS.length],
+            tips: 0,
+            echoes: 0,
+            broadcasterAddress: '0x123...abc'
+        }));
+        setSignals(mocks);
+        if (mocks.length > 0) {
+            setCurrentSignal(mocks[0]);
+        }
+    };
 
     return (
         <>
@@ -69,3 +124,14 @@ export const StreamPage: React.FC = () => {
         </>
     );
 };
+
+// Helper to convert color to mood
+function getMoodFromColor(color: string): 'CALM' | 'EXCITED' | 'MYSTERIOUS' | 'URGENT' | 'VOID' {
+    switch (color) {
+        case '#0EA5E9': return 'CALM';
+        case '#F97316': return 'EXCITED';
+        case '#A855F7': return 'MYSTERIOUS';
+        case '#EF4444': return 'URGENT';
+        default: return 'CALM';
+    }
+}
