@@ -84,11 +84,22 @@ export const EchoModal: React.FC<EchoModalProps> = ({
                     "inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-mono uppercase tracking-wider transition-all",
                     isRecording
                         ? "bg-accent-red/20 text-accent-red border border-accent-red/30 animate-pulse"
-                        : "bg-ui-border/20 text-ui-dim border border-ui-border/30"
+                        : "bg-accent-purple/20 text-accent-purple border border-accent-purple/30"
                 )}>
                     <Radio size={14} className={isRecording ? 'animate-spin' : ''} />
-                    NEW TRANSMISSION
+                    🔊 ECHO REPLY
                 </div>
+                {currentSignal && (
+                    <div className="mt-3 text-center">
+                        <p className="font-mono text-[10px] text-ui-dim">REPLYING TO</p>
+                        <p className="font-display text-sm text-white mt-1">
+                            Signal #{currentSignal.id?.substring(0, 6) || 'Unknown'}
+                        </p>
+                        <p className="font-mono text-[9px] text-ui-dim mt-1">
+                            {currentSignal.source} • {currentSignal.broadcaster?.substring(0, 8)}...
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* MINTING PROGRESS STATE */}

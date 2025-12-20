@@ -956,6 +956,45 @@
       "artifacts": [
         "VoiceNoteNFT"
       ]
+    },
+    "C:\\Projects\\Midnight\\contracts\\contracts\\EchoRegistry.sol": {
+      "lastModificationDate": 1766257125392,
+      "contentHash": "d2ae94ae82ce25ad38dd723a9d884ab7",
+      "sourceName": "contracts/EchoRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "EchoRegistry"
+      ]
     }
   }
 }

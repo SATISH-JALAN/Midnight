@@ -15,6 +15,9 @@ export interface Note {
   sector: string;
   tips: number;
   echoes: number;
+  // Echo-specific fields
+  isEcho?: boolean;
+  parentNoteId?: string;
 }
 
 /**
@@ -48,6 +51,20 @@ export interface UploadResponse {
 }
 
 /**
+ * NFTMetadata - Metadata stored on IPFS
+ */
+export interface NFTMetadata {
+  noteId: string;
+  duration: number;
+  moodColor: string;
+  waveform: number[];
+  broadcaster: string;
+  timestamp: number;
+  isEcho?: boolean;
+  parentNoteId?: string;
+}
+
+/**
  * WebSocket message types
  */
 export type WSMessageType = 
@@ -56,6 +73,7 @@ export type WSMessageType =
   | 'newNote'
   | 'tipReceived'
   | 'noteExpired'
+  | 'echoAdded'
   | 'ping'
   | 'pong';
 

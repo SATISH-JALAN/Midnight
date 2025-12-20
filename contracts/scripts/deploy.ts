@@ -25,17 +25,27 @@ async function main() {
   const tippingPoolAddress = await tippingPool.getAddress();
   console.log("   TippingPool deployed to:", tippingPoolAddress);
 
+  // Deploy EchoRegistry
+  console.log("\n3. Deploying EchoRegistry...");
+  const EchoRegistry = await ethers.getContractFactory("EchoRegistry");
+  const echoRegistry = await EchoRegistry.deploy(treasuryAddress);
+  await echoRegistry.waitForDeployment();
+  const echoRegistryAddress = await echoRegistry.getAddress();
+  console.log("   EchoRegistry deployed to:", echoRegistryAddress);
+
   // Summary
   console.log("\n========================================");
   console.log("DEPLOYMENT COMPLETE!");
   console.log("========================================");
   console.log("VoiceNoteNFT:", voiceNoteNFTAddress);
   console.log("TippingPool:", tippingPoolAddress);
+  console.log("EchoRegistry:", echoRegistryAddress);
   console.log("Treasury:", treasuryAddress);
   console.log("========================================");
   console.log("\nUpdate your backend .env with:");
   console.log(`NFT_CONTRACT_ADDRESS=${voiceNoteNFTAddress}`);
   console.log(`TIPPING_CONTRACT_ADDRESS=${tippingPoolAddress}`);
+  console.log(`ECHO_CONTRACT_ADDRESS=${echoRegistryAddress}`);
 }
 
 main()
@@ -44,3 +54,4 @@ main()
     console.error(error);
     process.exit(1);
   });
+

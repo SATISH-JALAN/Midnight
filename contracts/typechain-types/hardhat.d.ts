@@ -86,6 +86,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Strings__factory>;
     getContractFactory(
+      name: "EchoRegistry",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.EchoRegistry__factory>;
+    getContractFactory(
       name: "TippingPool",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TippingPool__factory>;
@@ -185,6 +189,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Strings>;
     getContractAt(
+      name: "EchoRegistry",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.EchoRegistry>;
+    getContractAt(
       name: "TippingPool",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -268,6 +277,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Strings>;
     deployContract(
+      name: "EchoRegistry",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EchoRegistry>;
+    deployContract(
       name: "TippingPool",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TippingPool>;
@@ -366,6 +379,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Strings>;
+    deployContract(
+      name: "EchoRegistry",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EchoRegistry>;
     deployContract(
       name: "TippingPool",
       args: any[],

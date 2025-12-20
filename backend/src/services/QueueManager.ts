@@ -102,6 +102,20 @@ export class QueueManager {
     }
     return removed;
   }
+
+  /**
+   * Add echo (alias for incrementEchoes for route compatibility)
+   */
+  addEcho(parentNoteId: string): boolean {
+    return this.incrementEchoes(parentNoteId);
+  }
+
+  /**
+   * Get all echoes for a parent note
+   */
+  getEchoes(parentNoteId: string): Note[] {
+    return this.queue.filter(n => n.isEcho && n.parentNoteId === parentNoteId);
+  }
 }
 
 // Export singleton instance

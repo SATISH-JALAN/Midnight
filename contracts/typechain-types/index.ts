@@ -42,6 +42,8 @@ export type { ReentrancyGuard } from "./@openzeppelin/contracts/utils/Reentrancy
 export { ReentrancyGuard__factory } from "./factories/@openzeppelin/contracts/utils/ReentrancyGuard__factory";
 export type { Strings } from "./@openzeppelin/contracts/utils/Strings";
 export { Strings__factory } from "./factories/@openzeppelin/contracts/utils/Strings__factory";
+export type { EchoRegistry } from "./contracts/EchoRegistry";
+export { EchoRegistry__factory } from "./factories/contracts/EchoRegistry__factory";
 export type { TippingPool } from "./contracts/TippingPool";
 export { TippingPool__factory } from "./factories/contracts/TippingPool__factory";
 export type { VoiceNoteNFT } from "./contracts/VoiceNoteNFT";

@@ -17,6 +17,8 @@ export interface NFTMetadata {
   waveform: number[];
   broadcaster: string;
   timestamp: number;
+  isEcho?: boolean;
+  parentNoteId?: string;
 }
 
 export class IPFSService {

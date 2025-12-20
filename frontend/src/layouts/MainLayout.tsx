@@ -116,6 +116,9 @@ export const MainLayout: React.FC = () => {
             return;
         }
 
+        // Check if this is an echo (reply to a signal)
+        const isEcho = modal === 'ECHO' && currentSignal?.id;
+
         try {
             // Step 1: Check and switch to Mantle Sepolia if needed
             if (chainId !== MANTLE_SEPOLIA_CHAIN_ID) {
@@ -130,13 +133,40 @@ export const MainLayout: React.FC = () => {
 
             // Step 2: Upload audio to IPFS via backend
             setMintingStatus('IPFS_UPLOAD');
-            console.log('[Mint] Uploading to IPFS...');
+            console.log(`[Mint] Uploading ${isEcho ? 'echo' : 'broadcast'} to IPFS...`);
 
-            const uploadResponse = await uploadAudio(recorder.audioBlob, address);
+            let uploadResponse;
+            if (isEcho && currentSignal?.id) {
+                // Upload as echo reply
+                const { uploadEcho } = await import('@/services/api');
+                uploadResponse = await uploadEcho(currentSignal.id, recorder.audioBlob, address);
+            } else {
+                // Standard broadcast upload
+                uploadResponse = await uploadAudio(recorder.audioBlob, address);
+            }
+
             if (!uploadResponse.success) {
                 throw new Error(uploadResponse.error || 'Upload failed');
             }
 
+            // For echoes, the backend handles blockchain registration
+            if (isEcho) {
+                const echoData = uploadResponse.data;
+                console.log('[Echo] Upload complete:', echoData);
+
+                setMintingStatus('SUCCESS');
+                addToast(`Echo sent! ${echoData.txHash ? `TX: ${echoData.txHash.slice(0, 10)}...` : ''}`, 'SUCCESS');
+
+                // Reset after success
+                setTimeout(() => {
+                    setMintingStatus('IDLE');
+                    setModal('NONE');
+                    recorder.resetRecording();
+                }, 2000);
+                return;
+            }
+
+            // Standard mint flow for non-echo broadcasts
             const { noteId, metadataUrl } = uploadResponse.data;
             console.log('[Mint] IPFS upload complete:', { noteId, metadataUrl });
 

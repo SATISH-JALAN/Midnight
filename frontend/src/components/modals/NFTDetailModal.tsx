@@ -43,7 +43,7 @@ export const NFTDetailModal: React.FC<NFTDetailModalProps> = ({ onClose, nft }) 
         : `https://sepolia.mantlescan.xyz/address/${VOICE_NOTE_NFT_ADDRESS}`;
 
     // Audio playback handlers
-    const togglePlayback = () => {
+    const togglePlayback = async () => {
         if (!audioUrl) {
             console.error('[NFTDetail] No audio URL available');
             return;
@@ -71,10 +71,15 @@ export const NFTDetailModal: React.FC<NFTDetailModalProps> = ({ onClose, nft }) 
             audioRef.current.pause();
             setIsPlaying(false);
         } else {
-            audioRef.current.play().catch(err => {
-                console.error('[NFTDetail] Failed to play:', err);
-            });
-            setIsPlaying(true);
+            try {
+                await audioRef.current.play();
+                setIsPlaying(true);
+            } catch (err: any) {
+                // Ignore AbortError - this happens when play is interrupted
+                if (err.name !== 'AbortError') {
+                    console.error('[NFTDetail] Failed to play:', err);
+                }
+            }
         }
     };
 

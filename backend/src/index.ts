@@ -8,6 +8,7 @@ import { uploadRoutes } from './routes/upload.js';
 import { streamRoutes } from './routes/stream.js';
 import { audioRoutes } from './routes/audio.js';
 import { collectionRoutes } from './routes/collection.js';
+import { echoRoutes } from './routes/echo.js';
 import { wsManager } from './services/WebSocketManager.js';
 
 // Create Hono app
@@ -23,6 +24,7 @@ app.route('/api/upload', uploadRoutes);
 app.route('/api/stream', streamRoutes);
 app.route('/api/audio', audioRoutes);
 app.route('/api/collection', collectionRoutes);
+app.route('/api/echo', echoRoutes);
 
 // Root endpoint
 app.get('/', (c) => {
@@ -36,6 +38,7 @@ app.get('/', (c) => {
       upload: 'POST /api/upload',
       stream: 'GET /api/stream',
       audio: 'GET /api/audio/:noteId',
+      echo: 'POST /api/echo/:parentNoteId',
       ws: 'WS /ws',
     },
   });

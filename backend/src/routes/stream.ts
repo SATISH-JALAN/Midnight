@@ -7,9 +7,12 @@ export const streamRoutes = new Hono();
 /**
  * GET /api/stream
  * Returns the list of active (non-expired) voice notes
+ * Echoes are filtered out - they appear as replies, not standalone broadcasts
  */
 streamRoutes.get('/', (c) => {
-  const notes = queueManager.getActiveQueue();
+  const allNotes = queueManager.getActiveQueue();
+  // Filter out echoes - they should only appear as replies under their parent
+  const notes = allNotes.filter(note => !note.isEcho);
   const stats = queueManager.getStats();
 
   return c.json({

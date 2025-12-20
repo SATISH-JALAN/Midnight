@@ -163,3 +163,78 @@ export async function fetchAllNFTs(): Promise<CollectionResponse> {
     return { success: false, error: 'Failed to fetch NFTs' };
   }
 }
+
+// ============= ECHO API =============
+
+export interface EchoResponse {
+  success: boolean;
+  data?: {
+    echoNoteId: string;
+    parentNoteId: string;
+    audioUrl: string;
+    metadataUrl: string;
+    duration: number;
+    txHash: string | null;
+  };
+  error?: string;
+}
+
+export interface EchoListResponse {
+  success: boolean;
+  data?: {
+    parentNoteId: string;
+    echoes: StreamNote[];
+    count: number;
+  };
+  error?: string;
+}
+
+/**
+ * Upload an echo reply to a parent note
+ */
+export async function uploadEcho(
+  parentNoteId: string,
+  audioBlob: Blob,
+  walletAddress: string
+): Promise<EchoResponse> {
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'echo.webm');
+  formData.append('walletAddress', walletAddress);
+
+  try {
+    const response = await fetch(`${API_BASE}/api/echo/${parentNoteId}`, {
+      method: 'POST',
+      body: formData,
+    });
+    return response.json();
+  } catch (err) {
+    console.error('[API] Failed to upload echo:', err);
+    return { success: false, error: 'Failed to upload echo' };
+  }
+}
+
+/**
+ * Fetch echoes for a parent note
+ */
+export async function fetchEchoes(parentNoteId: string): Promise<EchoListResponse> {
+  try {
+    const response = await fetch(`${API_BASE}/api/echo/${parentNoteId}`);
+    return response.json();
+  } catch (err) {
+    console.error('[API] Failed to fetch echoes:', err);
+    return { success: false, error: 'Failed to fetch echoes' };
+  }
+}
+
+/**
+ * Get echo fee
+ */
+export async function getEchoFee(): Promise<{ success: boolean; data?: { fee: string; currency: string }; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/echo/fee`);
+    return response.json();
+  } catch (err) {
+    console.error('[API] Failed to get echo fee:', err);
+    return { success: false, error: 'Failed to get echo fee' };
+  }
+}

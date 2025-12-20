@@ -130,7 +130,10 @@ export const SignalQueue: React.FC<SignalQueueProps> = ({ onCloseMobile }) => {
 
                                 <div className="text-right shrink-0 pl-2">
                                     <div className="font-mono text-[10px] text-ui-dim mb-1 bg-black/30 px-1.5 rounded">{signal.duration}</div>
-                                    {signal.tips > 0 && <div className="text-[9px] text-accent-orange font-mono flex items-center justify-end gap-1"><Zap size={8} /> {signal.tips}</div>}
+                                    <div className="flex items-center justify-end gap-2">
+                                        {signal.echoes > 0 && <div className="text-[9px] text-accent-purple font-mono flex items-center gap-1">🔊 {signal.echoes}</div>}
+                                        {signal.tips > 0 && <div className="text-[9px] text-accent-orange font-mono flex items-center gap-1"><Zap size={8} /> {signal.tips}</div>}
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -5,8 +5,8 @@
  */
 
 // Contract Addresses (Mantle Sepolia) - Properly checksummed (EIP-55)
-export const VOICE_NOTE_NFT_ADDRESS = '0xB3E35109174777923A88f13A97fb6b6d5542A136' as const;
-export const TIPPING_POOL_ADDRESS = '0xF73DD09E8d40966d4DC6E5d5A0e48c62E62471A5' as const;
+export const VOICE_NOTE_NFT_ADDRESS = '0x161fcd77CDb443D31A7907E6B796b9eef0D1e8Ac' as const;
+export const TIPPING_POOL_ADDRESS = '0x5f15D34b7860ecF726b34AdbCfeC48f0c89BE2b3' as const;
 
 // VoiceNoteNFT ABI (only functions we need for frontend)
 export const VOICE_NOTE_NFT_ABI = [

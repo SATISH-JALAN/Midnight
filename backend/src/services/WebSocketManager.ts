@@ -142,6 +142,22 @@ class WebSocketManagerClass {
   }
 
   /**
+   * Broadcast when an echo is added to a note
+   */
+  broadcastEchoAdded(data: {
+    echoNoteId: string;
+    parentNoteId: string;
+    broadcaster: string;
+    audioUrl: string;
+    duration: number;
+  }): void {
+    this.broadcast({
+      type: 'echoAdded',
+      data,
+    });
+  }
+
+  /**
    * Broadcast updated listener count
    */
   broadcastListenerCount(): void {

@@ -16,6 +16,7 @@ const envSchema = z.object({
   PRIVATE_KEY: z.string().min(1, 'PRIVATE_KEY is required'),
   NFT_CONTRACT_ADDRESS: z.string().min(1, 'NFT_CONTRACT_ADDRESS is required'),
   TIPPING_CONTRACT_ADDRESS: z.string().min(1, 'TIPPING_CONTRACT_ADDRESS is required'),
+  ECHO_CONTRACT_ADDRESS: z.string().min(1, 'ECHO_CONTRACT_ADDRESS is required'),
 });
 
 // Parse and validate environment variables
@@ -40,4 +41,5 @@ export const env = parsed.success ? parsed.data : {
   PRIVATE_KEY: process.env.PRIVATE_KEY || '',
   NFT_CONTRACT_ADDRESS: process.env.NFT_CONTRACT_ADDRESS || '',
   TIPPING_CONTRACT_ADDRESS: process.env.TIPPING_CONTRACT_ADDRESS || '',
+  ECHO_CONTRACT_ADDRESS: process.env.ECHO_CONTRACT_ADDRESS || '',
 };

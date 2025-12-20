@@ -24,6 +24,16 @@ const TIPPING_POOL_ABI = [
   'event TipReceived(uint256 indexed tokenId, address indexed tipper, address indexed broadcaster, uint256 tipAmount, uint256 platformFee, uint256 broadcasterAmount)',
 ];
 
+// EchoRegistry ABI
+const ECHO_REGISTRY_ABI = [
+  'function registerEcho(string parentNoteId, string echoNoteId, address parentBroadcaster) external payable',
+  'function getEchoFee() external pure returns (uint256)',
+  'function getEchoCount(string parentNoteId) external view returns (uint256)',
+  'function checkIsEcho(string noteId) external view returns (bool)',
+  'function getParent(string echoNoteId) external view returns (string)',
+  'event EchoRegistered(string indexed parentNoteId, string indexed echoNoteId, address echoBroadcaster, address parentBroadcaster, uint256 timestamp, uint256 creatorPayment, uint256 platformPayment)',
+];
+
 export interface MintResult {
   tokenId: number;
   txHash: string;
@@ -54,9 +64,11 @@ export class BlockchainService {
   private wallet: ethers.Wallet;
   private nftContract: ethers.Contract;
   private tippingContract: ethers.Contract;
+  private echoContract: ethers.Contract;
   // Read-only contracts (for blockchain queries without signing)
   private readOnlyNftContract: ethers.Contract;
   private readOnlyTippingContract: ethers.Contract;
+  private readOnlyEchoContract: ethers.Contract;
 
   constructor() {
     this.provider = new ethers.JsonRpcProvider(env.RPC_URL);
@@ -75,6 +87,12 @@ export class BlockchainService {
       this.wallet
     );
 
+    this.echoContract = new ethers.Contract(
+      env.ECHO_CONTRACT_ADDRESS,
+      ECHO_REGISTRY_ABI,
+      this.wallet
+    );
+
     // Read-only contracts (for queries - uses provider directly)
     this.readOnlyNftContract = new ethers.Contract(
       env.NFT_CONTRACT_ADDRESS,
@@ -88,9 +106,16 @@ export class BlockchainService {
       this.provider
     );
 
+    this.readOnlyEchoContract = new ethers.Contract(
+      env.ECHO_CONTRACT_ADDRESS,
+      ECHO_REGISTRY_ABI,
+      this.provider
+    );
+
     logger.info({
       nftContract: env.NFT_CONTRACT_ADDRESS,
       tippingContract: env.TIPPING_CONTRACT_ADDRESS,
+      echoContract: env.ECHO_CONTRACT_ADDRESS,
       wallet: this.wallet.address,
     }, 'BlockchainService initialized');
   }
@@ -324,6 +349,19 @@ export class BlockchainService {
         logger.warn({ tokenId: tokenId.toString() }, 'Failed to fetch metadata from IPFS');
       }
 
+      // Helper to convert IPFS URLs to HTTP gateway
+      const toGatewayUrl = (url: string | undefined): string | undefined => {
+        if (!url) return undefined;
+        if (url.startsWith('ipfs://')) {
+          return url.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+        }
+        return url;
+      };
+
+      // Get audio URL from metadata (convert IPFS to gateway)
+      const rawAudioUrl = metadata?.audioUrl || metadata?.animation_url;
+      const audioUrl = toGatewayUrl(rawAudioUrl);
+
       return {
         tokenId: tokenId.toString(),
         noteId: noteData?.noteId || metadata?.noteId || `note_${tokenId}`,
@@ -332,11 +370,11 @@ export class BlockchainService {
         metadata,
         tips,
         echoes: 0, // Could be calculated from events if needed
-        audioUrl: metadata?.audioUrl || metadata?.animation_url,
-        duration: metadata?.duration,
-        moodColor: metadata?.moodColor,
+        audioUrl,
+        duration: metadata?.duration || metadata?.properties?.duration,
+        moodColor: metadata?.moodColor || metadata?.properties?.moodColor,
         sector: metadata?.attributes?.find((a: any) => a.trait_type === 'Sector')?.value,
-        waveform: metadata?.waveform,
+        waveform: metadata?.waveform || metadata?.properties?.waveform,
         createdAt: noteData ? new Date(Number(noteData.createdAt) * 1000).toISOString() : metadata?.createdAt,
         expiresAt: noteData ? new Date(Number(noteData.expiresAt) * 1000).toISOString() : metadata?.expiresAt,
         isGhost: noteData?.isGhost || false,
@@ -390,6 +428,97 @@ export class BlockchainService {
     } catch (err) {
       logger.error({ err }, 'Failed to get all NFTs from blockchain');
       return [];
+    }
+  }
+
+  // ============= ECHO METHODS =============
+
+  /**
+   * Register an echo on the blockchain
+   */
+  async registerEcho(
+    parentNoteId: string,
+    echoNoteId: string,
+    parentBroadcaster: string,
+    echoBroadcaster: string
+  ): Promise<{ txHash: string }> {
+    logger.info({ parentNoteId, echoNoteId, parentBroadcaster }, 'Registering echo on blockchain');
+
+    try {
+      // Get the echo fee from contract
+      const echoFee = await this.readOnlyEchoContract.getEchoFee();
+
+      // Register echo with payment
+      const tx = await this.echoContract.registerEcho(
+        parentNoteId,
+        echoNoteId,
+        parentBroadcaster,
+        { value: echoFee }
+      );
+
+      const receipt = await tx.wait();
+
+      logger.info({ 
+        txHash: receipt.hash, 
+        echoNoteId, 
+        parentNoteId 
+      }, 'Echo registered successfully');
+
+      return { txHash: receipt.hash };
+    } catch (err) {
+      logger.error({ err, parentNoteId, echoNoteId }, 'Failed to register echo');
+      throw err;
+    }
+  }
+
+  /**
+   * Get echo count for a note
+   */
+  async getEchoCount(noteId: string): Promise<number> {
+    try {
+      const count = await this.readOnlyEchoContract.getEchoCount(noteId);
+      return Number(count);
+    } catch (err) {
+      logger.warn({ err, noteId }, 'Failed to get echo count');
+      return 0;
+    }
+  }
+
+  /**
+   * Get the echo fee
+   */
+  async getEchoFee(): Promise<string> {
+    try {
+      const fee = await this.readOnlyEchoContract.getEchoFee();
+      return ethers.formatEther(fee);
+    } catch (err) {
+      logger.warn({ err }, 'Failed to get echo fee');
+      return '0.001'; // Default fallback
+    }
+  }
+
+  /**
+   * Check if a note is an echo
+   */
+  async checkIsEcho(noteId: string): Promise<boolean> {
+    try {
+      return await this.readOnlyEchoContract.checkIsEcho(noteId);
+    } catch (err) {
+      logger.warn({ err, noteId }, 'Failed to check if note is echo');
+      return false;
+    }
+  }
+
+  /**
+   * Get the parent note ID for an echo
+   */
+  async getParentNoteId(echoNoteId: string): Promise<string | null> {
+    try {
+      const parentId = await this.readOnlyEchoContract.getParent(echoNoteId);
+      return parentId;
+    } catch (err) {
+      logger.warn({ err, echoNoteId }, 'Failed to get parent note ID');
+      return null;
     }
   }
 }
