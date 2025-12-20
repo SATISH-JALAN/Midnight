@@ -69,7 +69,14 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
     if (!userAddress) return BigInt(0);
     try {
       const result = await refetchMintFee();
-      return (result.data as bigint) ?? BigInt(0);
+      console.log('[useNFTMint] getMintFee result:', result);
+      
+      if (result.data !== undefined && result.data !== null) {
+        return result.data as bigint;
+      }
+      // If we can't read the fee, assume paid mint
+      console.warn('[useNFTMint] Could not read mint fee, using default');
+      return parseEther('0.001');
     } catch (err) {
       console.error('[useNFTMint] Failed to get mint fee:', err);
       return parseEther('0.001'); // Default fee
@@ -80,6 +87,7 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
     if (!userAddress) return 0;
     try {
       const result = await refetchFreeMints();
+      console.log('[useNFTMint] getFreeMints result:', result);
       return Number(result.data ?? 0);
     } catch (err) {
       console.error('[useNFTMint] Failed to get free mints:', err);

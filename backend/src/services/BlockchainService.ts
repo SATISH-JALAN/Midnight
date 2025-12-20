@@ -2,11 +2,18 @@ import { ethers } from 'ethers';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
 
-// VoiceNoteNFT ABI (only the functions we need)
+// VoiceNoteNFT ABI (includes read functions for blockchain queries)
 const VOICE_NOTE_NFT_ABI = [
+  // Write functions
   'function mint(address to, string noteId, string metadataUri) external payable returns (uint256)',
+  // Read functions
   'function getMintFee(address user) external view returns (uint256)',
   'function getFreeMintRemaining(address user) external view returns (uint256)',
+  'function balanceOf(address owner) external view returns (uint256)',
+  'function ownerOf(uint256 tokenId) external view returns (address)',
+  'function tokenURI(uint256 tokenId) external view returns (string)',
+  'function notes(uint256 tokenId) external view returns (string noteId, address broadcaster, uint256 createdAt, uint256 expiresAt, bool isGhost)',
+  // Events
   'event VoiceNoteMinted(uint256 indexed tokenId, string noteId, address indexed broadcaster, uint256 expiresAt)',
 ];
 
@@ -23,16 +30,39 @@ export interface MintResult {
   expiresAt: number;
 }
 
+// NFT data structure returned from blockchain queries
+export interface NFTData {
+  tokenId: string;
+  noteId: string;
+  owner: string;
+  tokenURI: string;
+  metadata: any | null;
+  tips: number;
+  echoes: number;
+  audioUrl?: string;
+  duration?: number;
+  moodColor?: string;
+  sector?: string;
+  waveform?: number[];
+  createdAt?: string;
+  expiresAt?: string;
+  isGhost?: boolean;
+}
+
 export class BlockchainService {
   private provider: ethers.JsonRpcProvider;
   private wallet: ethers.Wallet;
   private nftContract: ethers.Contract;
   private tippingContract: ethers.Contract;
+  // Read-only contracts (for blockchain queries without signing)
+  private readOnlyNftContract: ethers.Contract;
+  private readOnlyTippingContract: ethers.Contract;
 
   constructor() {
     this.provider = new ethers.JsonRpcProvider(env.RPC_URL);
     this.wallet = new ethers.Wallet(env.PRIVATE_KEY, this.provider);
     
+    // Contracts with wallet (for write operations)
     this.nftContract = new ethers.Contract(
       env.NFT_CONTRACT_ADDRESS,
       VOICE_NOTE_NFT_ABI,
@@ -45,12 +75,26 @@ export class BlockchainService {
       this.wallet
     );
 
+    // Read-only contracts (for queries - uses provider directly)
+    this.readOnlyNftContract = new ethers.Contract(
+      env.NFT_CONTRACT_ADDRESS,
+      VOICE_NOTE_NFT_ABI,
+      this.provider
+    );
+
+    this.readOnlyTippingContract = new ethers.Contract(
+      env.TIPPING_CONTRACT_ADDRESS,
+      TIPPING_POOL_ABI,
+      this.provider
+    );
+
     logger.info({
       nftContract: env.NFT_CONTRACT_ADDRESS,
       tippingContract: env.TIPPING_CONTRACT_ADDRESS,
       wallet: this.wallet.address,
     }, 'BlockchainService initialized');
   }
+
 
   /**
    * Mint a new voice note NFT
@@ -179,6 +223,173 @@ export class BlockchainService {
     } catch (err: any) {
       logger.error({ err }, 'Blockchain connection failed');
       return false;
+    }
+  }
+
+  // ============================================
+  // BLOCKCHAIN READING METHODS (for Collection)
+  // ============================================
+
+  /**
+   * Get all NFTs owned by an address using event logs
+   * Uses VoiceNoteMinted events since contract lacks ERC721Enumerable
+   */
+  async getNFTsByOwner(address: string): Promise<NFTData[]> {
+    try {
+      logger.info({ address }, 'Fetching NFTs for owner via blockchain events');
+
+      // Query VoiceNoteMinted events filtered by broadcaster (indexed param)
+      // Event: VoiceNoteMinted(uint256 indexed tokenId, string noteId, address indexed broadcaster, uint256 expiresAt)
+      // In ethers v6, filter args must include ALL event params (use null for non-indexed)
+      const filter = this.readOnlyNftContract.filters.VoiceNoteMinted(null, null, address, null);
+      const events = await this.readOnlyNftContract.queryFilter(filter, -9999);
+
+      logger.info({ address, eventCount: events.length }, 'Found VoiceNoteMinted events');
+
+      const nfts: NFTData[] = [];
+
+      for (const event of events) {
+        try {
+          const tokenId = (event as any).args.tokenId;
+          
+          // Verify still owned by this address (in case of transfer)
+          const currentOwner = await this.readOnlyNftContract.ownerOf(tokenId);
+          if (currentOwner.toLowerCase() !== address.toLowerCase()) {
+            continue; // NFT was transferred to someone else
+          }
+
+          const nft = await this.getNFTData(tokenId);
+          if (nft) {
+            nfts.push(nft);
+          }
+        } catch (err) {
+          logger.warn({ tokenId: (event as any).args?.tokenId?.toString() }, 'Failed to get NFT data');
+        }
+      }
+
+      logger.info({ address, nftCount: nfts.length }, 'NFTs fetched from blockchain');
+      return nfts;
+    } catch (err) {
+      logger.error({ err, address }, 'Failed to get NFTs by owner from blockchain');
+      return [];
+    }
+  }
+
+  /**
+   * Get data for a specific NFT token from blockchain
+   */
+  async getNFTData(tokenId: bigint | number): Promise<NFTData | null> {
+    try {
+      const tokenIdBigInt = BigInt(tokenId);
+      
+      // Get owner
+      const owner = await this.readOnlyNftContract.ownerOf(tokenIdBigInt);
+      
+      // Get tokenURI (metadata URL)
+      const tokenURI = await this.readOnlyNftContract.tokenURI(tokenIdBigInt);
+
+      // Get note data from contract storage
+      let noteData: any = null;
+      try {
+        noteData = await this.readOnlyNftContract.notes(tokenIdBigInt);
+      } catch {
+        // notes() might fail if token doesn't exist
+      }
+      
+      // Get tips from tipping contract
+      let tips = 0;
+      try {
+        const tipsWei = await this.readOnlyTippingContract.getTotalTips(tokenIdBigInt);
+        tips = parseFloat(ethers.formatEther(tipsWei));
+      } catch {
+        // Tips might not exist for this token
+      }
+
+      // Fetch metadata from IPFS/HTTP
+      let metadata: any = null;
+      try {
+        let metadataUrl = tokenURI;
+        // Convert IPFS URL to HTTP gateway
+        if (tokenURI.startsWith('ipfs://')) {
+          metadataUrl = tokenURI.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+        }
+        
+        const response = await fetch(metadataUrl, { 
+          signal: AbortSignal.timeout(10000) // 10 second timeout
+        });
+        if (response.ok) {
+          metadata = await response.json();
+        }
+      } catch (err) {
+        logger.warn({ tokenId: tokenId.toString() }, 'Failed to fetch metadata from IPFS');
+      }
+
+      return {
+        tokenId: tokenId.toString(),
+        noteId: noteData?.noteId || metadata?.noteId || `note_${tokenId}`,
+        owner,
+        tokenURI,
+        metadata,
+        tips,
+        echoes: 0, // Could be calculated from events if needed
+        audioUrl: metadata?.audioUrl || metadata?.animation_url,
+        duration: metadata?.duration,
+        moodColor: metadata?.moodColor,
+        sector: metadata?.attributes?.find((a: any) => a.trait_type === 'Sector')?.value,
+        waveform: metadata?.waveform,
+        createdAt: noteData ? new Date(Number(noteData.createdAt) * 1000).toISOString() : metadata?.createdAt,
+        expiresAt: noteData ? new Date(Number(noteData.expiresAt) * 1000).toISOString() : metadata?.expiresAt,
+        isGhost: noteData?.isGhost || false,
+      };
+    } catch (err) {
+      logger.error({ err, tokenId: tokenId.toString() }, 'Failed to get NFT data');
+      return null;
+    }
+  }
+
+  /**
+   * Get all NFTs from blockchain (for explore/stream page)
+   * Queries all VoiceNoteMinted events and fetches data
+   */
+  async getAllNFTs(limit: number = 50): Promise<NFTData[]> {
+    try {
+      logger.info({ limit }, 'Fetching all NFTs via blockchain events');
+
+      // Query all VoiceNoteMinted events (no filter)
+      const filter = this.readOnlyNftContract.filters.VoiceNoteMinted();
+      const events = await this.readOnlyNftContract.queryFilter(filter, -9999);
+
+      logger.info({ eventCount: events.length }, 'Found total VoiceNoteMinted events');
+
+      const nfts: NFTData[] = [];
+      const processedTokenIds = new Set<string>();
+      
+      // Process most recent first (reverse order)
+      const recentEvents = events.slice(-limit).reverse();
+
+      for (const event of recentEvents) {
+        try {
+          const tokenId = (event as any).args.tokenId;
+          const tokenIdStr = tokenId.toString();
+          
+          // Skip duplicates
+          if (processedTokenIds.has(tokenIdStr)) continue;
+          processedTokenIds.add(tokenIdStr);
+
+          const nft = await this.getNFTData(tokenId);
+          if (nft) {
+            nfts.push(nft);
+          }
+        } catch (err) {
+          logger.warn({ err }, 'Failed to get NFT from event');
+        }
+      }
+
+      logger.info({ nftCount: nfts.length }, 'All NFTs fetched from blockchain');
+      return nfts;
+    } catch (err) {
+      logger.error({ err }, 'Failed to get all NFTs from blockchain');
+      return [];
     }
   }
 }

@@ -6,6 +6,7 @@ import { Signal } from '@/types';
 import { fetchStream, getAudioUrl } from '@/services/api';
 import { useAccount } from 'wagmi';
 import { WalletGate } from '@/components/WalletGate';
+import { useStreamAudio } from '@/hooks/useStreamAudio';
 
 export const StreamPage: React.FC = () => {
     const {
@@ -20,6 +21,9 @@ export const StreamPage: React.FC = () => {
 
     const [showMobileQueue, setShowMobileQueue] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Enable audio playback for current signal
+    useStreamAudio();
 
     // Fetch real stream data from backend
     useEffect(() => {
