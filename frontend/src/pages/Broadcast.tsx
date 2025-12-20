@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRadioStore } from '@/store/useRadioStore';
-import { Mic, Radio, Signal, Wifi, Lock, Cpu, Globe, UploadCloud, CheckCircle2 } from 'lucide-react';
+import { Mic, Radio, Signal, Wifi, Lock, Cpu, Globe, Zap, Sparkles, Activity, Users } from 'lucide-react';
 import { gsap } from 'gsap';
 import { cn } from '@/lib/utils';
+import { useAccount } from 'wagmi';
 
 export const BroadcastPage: React.FC = () => {
     const {
@@ -10,21 +11,28 @@ export const BroadcastPage: React.FC = () => {
         recordingTime,
         mintingStatus,
         setModal,
-        setIsRecording,
-        setMintingStatus,
-        addToast
+        listenerCount
     } = useRadioStore();
 
+    const { isConnected } = useAccount();
+
     const [accessGranted, setAccessGranted] = useState(false);
+    const [signalStrength, setSignalStrength] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
     const pulseRef = useRef<HTMLDivElement>(null);
 
     // Initial permission "check" simulation
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setAccessGranted(true);
-        }, 1500);
+        const timer = setTimeout(() => setAccessGranted(true), 1500);
         return () => clearTimeout(timer);
+    }, []);
+
+    // Simulate signal strength
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setSignalStrength(Math.floor(Math.random() * 30) + 70);
+        }, 2000);
+        return () => clearInterval(interval);
     }, []);
 
     const formatTime = (seconds: number) => {
@@ -35,28 +43,27 @@ export const BroadcastPage: React.FC = () => {
 
     const handleAction = () => {
         if (!isRecording && mintingStatus === 'IDLE') {
-            // Start Flow
             setModal('RECORD');
         }
     };
 
-    // Visualizer Loop
+    // Visualizer Animation
     useEffect(() => {
         if (!pulseRef.current) return;
 
         let ctx = gsap.context(() => {
             if (isRecording) {
                 gsap.to(".pulse-ring", {
-                    scale: "random(1.2, 2.5)",
+                    scale: "random(1.2, 2.0)",
                     opacity: 0,
-                    duration: 1.5,
-                    stagger: 0.2,
+                    duration: 1.2,
+                    stagger: 0.15,
                     repeat: -1,
                     ease: "power2.out"
                 });
             } else {
                 gsap.killTweensOf(".pulse-ring");
-                gsap.to(".pulse-ring", { scale: 1, opacity: 0.3, duration: 0.5 });
+                gsap.to(".pulse-ring", { scale: 1, opacity: 0.2, duration: 0.5 });
             }
         }, pulseRef);
 
@@ -65,94 +72,144 @@ export const BroadcastPage: React.FC = () => {
 
 
     return (
-        <div ref={containerRef} className="flex-1 h-full flex flex-col items-center justify-center relative overflow-hidden bg-space-black">
+        <div ref={containerRef} className="flex-1 h-full flex flex-col items-center relative overflow-hidden bg-space-black">
 
-            {/* Background Texture */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-space-panel/30 via-space-black to-space-black z-0 pointer-events-none" />
+            {/* Dynamic Background */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent-purple/20 rounded-full blur-[150px] animate-pulse" />
+                <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent-cyan/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent-red/10 rounded-full blur-[200px]" />
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+            </div>
 
             {/* Status HUD - Top */}
-            <div className="absolute top-8 w-full max-w-4xl flex justify-between px-8 font-mono text-xs text-ui-dim z-20">
-                <div className="flex gap-6">
-                    <div className="flex items-center gap-2">
-                        <Wifi size={14} className={cn(accessGranted ? "text-accent-phosphor" : "text-red-500 animate-pulse")} />
-                        <span>RELAY_LINK: {accessGranted ? "SECURE" : "SEARCHING..."}</span>
+            <div className="w-full max-w-5xl flex justify-between px-6 py-4 font-mono text-xs z-20">
+                <div className="flex gap-3 items-center">
+                    <div className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all",
+                        accessGranted
+                            ? "border-accent-phosphor/50 bg-accent-phosphor/10 text-accent-phosphor"
+                            : "border-red-500/50 bg-red-500/10 text-red-400 animate-pulse"
+                    )}>
+                        <div className={cn("w-2 h-2 rounded-full", accessGranted ? "bg-accent-phosphor" : "bg-red-500")} />
+                        <Wifi size={12} />
+                        <span>{accessGranted ? "SECURE" : "CONNECTING..."}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Globe size={14} className="text-accent-cyan" />
-                        <span>NODE: ASIA_01</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-ui-border/50 bg-space-panel/50 text-ui-dim">
+                        <Globe size={12} className="text-accent-cyan" />
+                        <span>ASIA_01</span>
                     </div>
                 </div>
-                <div className="flex gap-6">
-                    <div className="flex items-center gap-2">
-                        <Lock size={14} className="text-accent-purple" />
-                        <span>ENCRYPTION: AES-256</span>
+                <div className="flex gap-3 items-center">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-ui-border/50 bg-space-panel/50 text-ui-dim">
+                        <Lock size={12} className="text-accent-purple" />
+                        <span>AES-256</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Cpu size={14} className="text-white" />
-                        <span>FREQ: 432.00 MHz</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-ui-border/50 bg-space-panel/50">
+                        <Activity size={12} className="text-accent-orange" />
+                        <span className="text-white font-bold">{signalStrength}%</span>
                     </div>
                 </div>
             </div>
 
-            {/* Central Transmitter Core */}
-            <div className="relative z-10 flex flex-col items-center">
+            {/* Central Area - Flex grow to push content to center */}
+            <div className="flex-1 flex flex-col items-center justify-center z-10 pb-32">
 
-                {/* Visualizer Ring */}
-                <div ref={pulseRef} className="relative w-64 h-64 md:w-96 md:h-96 flex items-center justify-center mb-12">
-                    {/* Animated Rings */}
-                    <div className="pulse-ring absolute inset-0 rounded-full border border-accent-red/30" />
-                    <div className="pulse-ring absolute inset-4 rounded-full border border-accent-red/20" />
-                    <div className="pulse-ring absolute inset-8 rounded-full border border-accent-red/10" />
+                {/* Orbital Ring Visual */}
+                <div ref={pulseRef} className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center mb-6">
 
-                    {/* Core Button Area */}
+                    {/* Animated Pulse Rings */}
+                    <div className="pulse-ring absolute inset-0 rounded-full border-2 border-accent-red/40" />
+                    <div className="pulse-ring absolute inset-4 rounded-full border border-accent-red/30" />
+                    <div className="pulse-ring absolute inset-8 rounded-full border border-accent-cyan/20" />
+
+                    {/* Core Button */}
                     <div
                         className={cn(
-                            "relative w-32 h-32 md:w-48 md:h-48 rounded-full flex items-center justify-center transition-all duration-500 cursor-pointer group hover:scale-105",
-                            isRecording ? "bg-accent-red shadow-[0_0_50px_rgba(239,68,68,0.6)]" : "bg-space-panel border-2 border-accent-red/50 hover:border-accent-red hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]"
+                            "relative w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center transition-all duration-500 cursor-pointer group",
+                            isRecording
+                                ? "bg-gradient-to-br from-accent-red to-red-700 shadow-[0_0_50px_rgba(239,68,68,0.6)]"
+                                : "bg-gradient-to-br from-space-panel to-space-navy border-2 border-accent-cyan/30 hover:border-accent-cyan hover:scale-105 hover:shadow-[0_0_30px_rgba(6,182,212,0.4)]"
                         )}
                         onClick={handleAction}
                     >
                         {isRecording ? (
                             <div className="flex flex-col items-center">
-                                <div className="w-16 flex gap-1 items-end h-8 mb-2">
+                                <div className="flex gap-0.5 items-end h-6 mb-2">
                                     {[1, 2, 3, 4, 5].map(i => (
-                                        <div key={i} className="w-2 bg-white animate-waveform" style={{ animationDelay: `${i * 0.1}s` }} />
+                                        <div key={i} className="w-1.5 bg-white rounded-full animate-waveform" style={{ animationDelay: `${i * 0.1}s`, minHeight: '6px' }} />
                                     ))}
                                 </div>
-                                <span className="font-mono text-white text-xl font-bold tracking-widest">{formatTime(recordingTime)}</span>
+                                <span className="font-mono text-white text-lg font-bold tracking-wider">{formatTime(recordingTime)}</span>
+                                <span className="font-mono text-red-200 text-[8px] tracking-widest animate-pulse">● REC</span>
                             </div>
                         ) : (
-                            <Mic size={48} className="text-white group-hover:animate-bounce" />
+                            <div className="flex flex-col items-center">
+                                <Mic size={36} className="text-white group-hover:scale-110 transition-transform" />
+                            </div>
                         )}
                     </div>
                 </div>
 
-                {/* Primary Action Text */}
-                <div className="text-center space-y-4">
-                    <h1 className="font-logo text-4xl md:text-5xl tracking-[0.2em] text-white">
-                        {isRecording ? "TRANSMITTING..." : "SIGNAL UPLINK"}
+                {/* Title & Status */}
+                <div className="text-center space-y-2">
+                    <h1 className="font-display text-3xl md:text-4xl font-bold tracking-wide">
+                        <span className={cn(
+                            "bg-clip-text text-transparent bg-gradient-to-r",
+                            isRecording
+                                ? "from-red-400 via-accent-red to-orange-400"
+                                : "from-white via-accent-cyan to-accent-purple"
+                        )}>
+                            {isRecording ? "TRANSMITTING" : "SIGNAL UPLINK"}
+                        </span>
                     </h1>
-                    <p className="font-mono text-accent-red text-sm tracking-widest uppercase">
-                        {isRecording ? "LIVE BROADCAST ACTIVE" : "READY FOR INITIALIZATION"}
+                    <p className={cn(
+                        "font-mono text-xs tracking-[0.15em] uppercase",
+                        isRecording ? "text-red-400 animate-pulse" : "text-ui-dim"
+                    )}>
+                        {isRecording ? "🔴 LIVE BROADCAST" : "TAP TO INITIALIZE"}
                     </p>
+                    {!isConnected && (
+                        <p className="font-mono text-[10px] text-accent-orange animate-pulse mt-2">
+                            ⚠ CONNECT WALLET TO MINT ON-CHAIN
+                        </p>
+                    )}
                 </div>
-
             </div>
 
-            {/* Bottom Panel - History or Recent Logs Placeholder */}
-            <div className="absolute bottom-0 w-full h-32 border-t border-ui-border bg-space-black/80 backdrop-blur flex items-center justify-center z-10">
-                <div className="flex gap-12 opacity-50">
-                    <div className="text-center">
-                        <div className="text-2xl font-bold font-display text-white">0</div>
-                        <div className="text-[10px] font-mono text-ui-dim uppercase">Active Signals</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-2xl font-bold font-display text-white">---</div>
-                        <div className="text-[10px] font-mono text-ui-dim uppercase">Last Range</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-2xl font-bold font-display text-white">0.00</div>
-                        <div className="text-[10px] font-mono text-ui-dim uppercase">Total MNT Earned</div>
+            {/* Bottom Stats Panel */}
+            <div className="absolute bottom-0 left-0 right-0 border-t border-ui-border/50 bg-gradient-to-t from-space-black to-transparent backdrop-blur-sm z-10">
+                <div className="max-w-2xl mx-auto py-4 px-6">
+                    <div className="grid grid-cols-4 gap-4 text-center">
+                        <div>
+                            <div className="flex items-center justify-center gap-1.5">
+                                <Users size={12} className="text-accent-cyan" />
+                                <span className="text-xl font-bold text-white">{listenerCount}</span>
+                            </div>
+                            <div className="text-[9px] font-mono text-ui-dim uppercase">Listeners</div>
+                        </div>
+                        <div>
+                            <div className="flex items-center justify-center gap-1.5">
+                                <Signal size={12} className="text-accent-phosphor" />
+                                <span className="text-xl font-bold text-white">{signalStrength}%</span>
+                            </div>
+                            <div className="text-[9px] font-mono text-ui-dim uppercase">Signal</div>
+                        </div>
+                        <div>
+                            <div className="flex items-center justify-center gap-1.5">
+                                <Zap size={12} className="text-accent-orange" />
+                                <span className="text-xl font-bold text-accent-phosphor">●</span>
+                            </div>
+                            <div className="text-[9px] font-mono text-ui-dim uppercase">Status</div>
+                        </div>
+                        <div>
+                            <div className="flex items-center justify-center gap-1.5">
+                                <Radio size={12} className="text-accent-purple" />
+                                <span className="text-xl font-bold text-white">432</span>
+                                <span className="text-[9px] text-ui-dim">MHz</span>
+                            </div>
+                            <div className="text-[9px] font-mono text-ui-dim uppercase">Freq</div>
+                        </div>
                     </div>
                 </div>
             </div>
