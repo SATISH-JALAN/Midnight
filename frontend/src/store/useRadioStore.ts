@@ -43,6 +43,10 @@ interface RadioState {
   recordingTime: number;
   toasts: Toast[];
 
+  // Playback time tracking
+  playbackCurrentTime: number; // Current position in seconds
+  playbackDuration: number;    // Total duration in seconds
+
   // Bridge for remote controls
   command: 'STOP_RECORDING' | 'NONE';
   triggerCommand: (cmd: 'STOP_RECORDING' | 'NONE') => void;
@@ -67,6 +71,7 @@ interface RadioState {
   
   addToast: (message: string, type: Toast['type']) => void;
   removeToast: (id: string) => void;
+  setPlaybackTime: (currentTime: number, duration: number) => void;
 }
 
 export const useRadioStore = create<RadioState>((set) => ({
@@ -94,6 +99,8 @@ export const useRadioStore = create<RadioState>((set) => ({
   isPlaying: false,
   recordingTime: 0,
   toasts: [],
+  playbackCurrentTime: 0,
+  playbackDuration: 0,
 
   // Actions
   triggerCommand: (command) => set({ command }),
@@ -121,4 +128,9 @@ export const useRadioStore = create<RadioState>((set) => ({
   removeToast: (id) => set((state) => ({
     toasts: state.toasts.filter((t) => t.id !== id)
   })),
+
+  setPlaybackTime: (currentTime, duration) => set({ 
+    playbackCurrentTime: currentTime, 
+    playbackDuration: duration 
+  }),
 }));

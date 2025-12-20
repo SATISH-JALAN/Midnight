@@ -3,6 +3,7 @@ import { useRadioStore } from '@/store/useRadioStore';
 import { Signal, LeaderboardEntry } from '@/types';
 import { Play, TrendingUp, Trophy, Zap, Share2, Activity, Star } from 'lucide-react';
 import { gsap } from 'gsap';
+import { fetchStream, getAudioUrl } from '@/services/api';
 
 export const ExplorePage: React.FC = () => {
     const {
@@ -12,53 +13,117 @@ export const ExplorePage: React.FC = () => {
         setIsPlaying
     } = useRadioStore();
 
-    // Mock Data Initialization
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Fetch real data from backend
     useEffect(() => {
-        const store = useRadioStore.getState();
-        if (store.trendingSignals.length === 0) {
-            // Mock Trending
-            const mocks: Signal[] = Array.from({ length: 5 }).map((_, i) => ({
-                id: `trend-${i}`,
-                source: `Sector ${['9X', 'Alpha', 'Void', 'Deep'][i % 4]}`,
-                frequency: 880 + i * 20,
-                duration: "03:22",
-                timestamp: new Date().toISOString(),
-                mood: ['EXCITED', 'URGENT', 'MYSTERIOUS'][i % 3] as any,
-                tips: 42 + i * 10,
-                echoes: 15 + i * 5,
-                hasAudio: true
-            }));
+        const loadExploreData = async () => {
+            try {
+                setIsLoading(true);
+                const response = await fetchStream();
 
-            // Mock Leaderboards
-            const entries: LeaderboardEntry[] = Array.from({ length: 5 }).map((_, i) => ({
-                rank: i + 1,
-                signalId: `sig-${i}`,
-                sector: `Sector ${['A', 'B', 'C'][i % 3]}`,
-                value: 1000 - i * 50,
-                trend: i === 0 ? 'up' : i === 4 ? 'down' : 'neutral'
-            }));
+                if (response.success && response.data?.notes) {
+                    // Convert backend notes to Signal format
+                    const signals: Signal[] = response.data.notes.map((note, index) => ({
+                        id: note.noteId,
+                        source: note.sector,
+                        frequency: 880 + index * 20,
+                        duration: `${Math.floor(note.duration / 60)}:${(note.duration % 60).toString().padStart(2, '0')}`,
+                        timestamp: new Date(note.timestamp).toISOString(),
+                        mood: getMoodFromColor(note.moodColor),
+                        tips: note.tips,
+                        echoes: note.echoes,
+                        hasAudio: true,
+                        noteId: note.noteId,
+                        audioUrl: getAudioUrl(note.noteId),
+                        broadcaster: note.broadcaster,
+                        listenerCount: response.data?.totalListeners || 0,
+                    }));
 
-            // We can't update store directly via getState calls nicely inside useEffect without triggering re-renders carefully, 
-            // but Zustand is stable. Ideally, we'd have a `fetchExploreData` action.
-            // For now, let's just use local mock if store is empty or populate store hacks.
-            // Since we don't have actions for setTrending etc exposed in the Hook destructuring above (I need to check store),
-            // I'll assume they are not exposed yet. Let's check store... 
-            // Store has `trendingSignals` state but no explicit setter action in interface?
-            // "setSignals" exists. "setUserNFTs" exists.
-            // "setTrending" does NOT exist in the interface I saw.
-            // I should technically add it to the store. 
-            // For this task, I will just use local state for the UI if store doesn't have actions, 
-            // OR I can use `useRadioStore.setState({ trendingSignals: ... })`.
-            useRadioStore.setState({
-                trendingSignals: mocks,
-                leaderboard: { topTipped: entries, mostEchoed: entries }
-            });
-        }
+                    // Create leaderboard from signals sorted by tips/echoes
+                    const topTipped: LeaderboardEntry[] = [...signals]
+                        .sort((a, b) => (b.tips || 0) - (a.tips || 0))
+                        .slice(0, 5)
+                        .map((s, i) => ({
+                            rank: i + 1,
+                            signalId: s.id,
+                            sector: s.source,
+                            value: s.tips || 0,
+                            trend: i === 0 ? 'up' : 'neutral',
+                        }));
+
+                    const mostEchoed: LeaderboardEntry[] = [...signals]
+                        .sort((a, b) => (b.echoes || 0) - (a.echoes || 0))
+                        .slice(0, 5)
+                        .map((s, i) => ({
+                            rank: i + 1,
+                            signalId: s.id,
+                            sector: s.source,
+                            value: s.echoes || 0,
+                            trend: i === 0 ? 'up' : 'neutral',
+                        }));
+
+                    useRadioStore.setState({
+                        trendingSignals: signals,
+                        leaderboard: { topTipped, mostEchoed }
+                    });
+                } else {
+                    // Fallback to mock if no data
+                    loadMockData();
+                }
+            } catch (err) {
+                console.error('Failed to fetch explore data:', err);
+                loadMockData();
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadExploreData();
     }, []);
+
+    // Fallback mock data
+    const loadMockData = () => {
+        const mocks: Signal[] = Array.from({ length: 5 }).map((_, i) => ({
+            id: `trend-${i}`,
+            source: `Sector ${['9X', 'Alpha', 'Void', 'Deep'][i % 4]}`,
+            frequency: 880 + i * 20,
+            duration: "03:22",
+            timestamp: new Date().toISOString(),
+            mood: ['EXCITED', 'URGENT', 'MYSTERIOUS'][i % 3] as any,
+            tips: 42 + i * 10,
+            echoes: 15 + i * 5,
+            hasAudio: false
+        }));
+
+        const entries: LeaderboardEntry[] = Array.from({ length: 5 }).map((_, i) => ({
+            rank: i + 1,
+            signalId: `sig-${i}`,
+            sector: `Sector ${['A', 'B', 'C'][i % 3]}`,
+            value: 1000 - i * 50,
+            trend: i === 0 ? 'up' : i === 4 ? 'down' : 'neutral'
+        }));
+
+        useRadioStore.setState({
+            trendingSignals: mocks,
+            leaderboard: { topTipped: entries, mostEchoed: entries }
+        });
+    };
 
     const handlePlay = (signal: Signal) => {
         setCurrentSignal(signal);
         setIsPlaying(true);
+    };
+
+    // Helper to convert color to mood
+    const getMoodFromColor = (color: string): 'CALM' | 'EXCITED' | 'MYSTERIOUS' | 'URGENT' | 'VOID' => {
+        switch (color) {
+            case '#0EA5E9': return 'CALM';
+            case '#F97316': return 'EXCITED';
+            case '#A855F7': return 'MYSTERIOUS';
+            case '#EF4444': return 'URGENT';
+            default: return 'CALM';
+        }
     };
 
     return (

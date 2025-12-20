@@ -1,6 +1,7 @@
 /**
  * Hook for playing stream audio
  * Listens to isPlaying and currentSignal from store
+ * Tracks playback time for countdown display
  */
 
 import { useEffect, useRef } from 'react';
@@ -8,7 +9,13 @@ import { useRadioStore } from '@/store/useRadioStore';
 
 export function useStreamAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { currentSignal, isPlaying, setIsPlaying, addToast } = useRadioStore();
+  const { 
+    currentSignal, 
+    isPlaying, 
+    setIsPlaying, 
+    addToast,
+    setPlaybackTime 
+  } = useRadioStore();
 
   // Handle audio playback
   useEffect(() => {
@@ -20,6 +27,8 @@ export function useStreamAudio() {
       if (audioRef.current) {
         audioRef.current.pause();
       }
+      // Reset time when stopped
+      setPlaybackTime(0, 0);
       return;
     }
 
@@ -37,17 +46,30 @@ export function useStreamAudio() {
       audioRef.current.onended = () => {
         console.log('[StreamAudio] Track ended');
         setIsPlaying(false);
-        // Could auto-play next track here
+        setPlaybackTime(0, 0);
       };
 
       audioRef.current.onerror = (e) => {
         console.error('[StreamAudio] Error playing audio:', e);
         addToast('Failed to play audio', 'error');
         setIsPlaying(false);
+        setPlaybackTime(0, 0);
       };
 
-      audioRef.current.onloadeddata = () => {
-        console.log('[StreamAudio] Audio loaded:', audioUrl);
+      audioRef.current.onloadedmetadata = () => {
+        const duration = audioRef.current?.duration || 0;
+        console.log('[StreamAudio] Audio loaded, duration:', duration);
+        setPlaybackTime(0, duration);
+      };
+
+      // Update time as audio plays
+      audioRef.current.ontimeupdate = () => {
+        if (audioRef.current) {
+          setPlaybackTime(
+            audioRef.current.currentTime,
+            audioRef.current.duration
+          );
+        }
       };
     }
 
@@ -55,11 +77,11 @@ export function useStreamAudio() {
     console.log('[StreamAudio] Playing:', audioUrl);
     audioRef.current.play().catch((err) => {
       console.error('[StreamAudio] Play failed:', err);
-      // Don't show toast for abort errors (happens when quickly switching)
       if (err.name !== 'AbortError') {
         addToast('Failed to play audio', 'error');
       }
       setIsPlaying(false);
+      setPlaybackTime(0, 0);
     });
 
     // Cleanup on unmount
@@ -69,14 +91,6 @@ export function useStreamAudio() {
       }
     };
   }, [isPlaying, currentSignal?.audioUrl, currentSignal?.id]);
-
-  // Pause when signal changes
-  useEffect(() => {
-    if (audioRef.current && currentSignal) {
-      // New signal selected - audio URL will be different
-      // The above effect will handle creating new audio
-    }
-  }, [currentSignal?.id]);
 
   return {
     audioRef,

@@ -278,6 +278,26 @@ const ActiveState: React.FC<{
   const visualizerRef = useRef<HTMLDivElement>(null);
   const playBtnRef = useRef<HTMLButtonElement>(null);
 
+  // Get playback time from store for countdown
+  const { playbackCurrentTime, playbackDuration } = useRadioStore();
+
+  // Format time as MM:SS
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Calculate remaining time when playing
+  const getDisplayTime = (): string => {
+    if (isPlaying && playbackDuration > 0) {
+      const remaining = Math.max(0, playbackDuration - playbackCurrentTime);
+      return formatTime(remaining);
+    }
+    // When paused, show the signal's total duration
+    return signal.duration || '00:00';
+  };
+
   // Radar/Circular Visualizer Logic
   useEffect(() => {
     if (!visualizerRef.current) return;
@@ -400,7 +420,7 @@ const ActiveState: React.FC<{
           {/* Timer Overlay */}
           <div className="absolute flex flex-col items-center justify-center pointer-events-none z-20">
             <span className="text-phosphor font-mono text-4xl md:text-5xl font-bold text-white drop-shadow-md tabular-nums tracking-wider">
-              {isPlaying ? '00:24' : `00:${signal.duration}`}
+              {getDisplayTime()}
             </span>
             <div className="mt-2 text-[9px] md:text-[10px] font-mono text-accent-cyan bg-accent-cyan/10 px-2 rounded">
               {signal.frequency} MHz
