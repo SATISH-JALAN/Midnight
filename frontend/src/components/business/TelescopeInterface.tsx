@@ -26,7 +26,10 @@ export const TelescopeInterface: React.FC<TelescopeInterfaceProps> = ({
 
   const onPlayPause = () => requireWallet(() => setIsPlaying(!isPlaying));
   const onRecordStart = () => requireWallet(() => setModal('RECORD'));
-  const onTip = () => requireWallet(() => setModal('TIP'));
+  const onTip = () => requireWallet(() => setModal('TIP', {
+    broadcaster: currentSignal?.broadcaster || currentSignal?.broadcasterAddress,
+    tokenId: currentSignal?.noteId ? 0 : 0, // TokenId is 0 for now, could be fetched
+  }));
   const onEcho = () => requireWallet(() => setModal('ECHO'));
 
   const onNext = () => {

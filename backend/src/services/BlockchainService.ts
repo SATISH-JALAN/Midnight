@@ -268,7 +268,12 @@ export class BlockchainService {
       // Event: VoiceNoteMinted(uint256 indexed tokenId, string noteId, address indexed broadcaster, uint256 expiresAt)
       // In ethers v6, filter args must include ALL event params (use null for non-indexed)
       const filter = this.readOnlyNftContract.filters.VoiceNoteMinted(null, null, address, null);
-      const events = await this.readOnlyNftContract.queryFilter(filter, -9999);
+      
+      // Get current block and query last 9000 blocks (leave buffer for finalization)
+      const currentBlock = await this.provider.getBlockNumber();
+      const toBlock = currentBlock - 10; // Buffer for block finalization
+      const fromBlock = Math.max(0, toBlock - 9000);
+      const events = await this.readOnlyNftContract.queryFilter(filter, fromBlock, toBlock);
 
       logger.info({ address, eventCount: events.length }, 'Found VoiceNoteMinted events');
 
@@ -396,7 +401,12 @@ export class BlockchainService {
 
       // Query all VoiceNoteMinted events (no filter)
       const filter = this.readOnlyNftContract.filters.VoiceNoteMinted();
-      const events = await this.readOnlyNftContract.queryFilter(filter, -9999);
+      
+      // Get current block and query last 9000 blocks (leave buffer for finalization)
+      const currentBlock = await this.provider.getBlockNumber();
+      const toBlock = currentBlock - 10; // Buffer for block finalization
+      const fromBlock = Math.max(0, toBlock - 9000);
+      const events = await this.readOnlyNftContract.queryFilter(filter, fromBlock, toBlock);
 
       logger.info({ eventCount: events.length }, 'Found total VoiceNoteMinted events');
 
@@ -551,6 +561,62 @@ export class BlockchainService {
       }));
     } catch (err) {
       logger.error({ err, parentNoteId }, 'Failed to get echoes from blockchain');
+      return [];
+    }
+  }
+
+  /**
+   * Get all tips made by a user from TipReceived events
+   */
+  async getTipsByUser(userAddress: string): Promise<{
+    tokenId: string;
+    tipper: string;
+    broadcaster: string;
+    tipAmount: string;
+    platformFee: string;
+    broadcasterAmount: string;
+    txHash: string;
+    blockNumber: number;
+    timestamp?: number;
+  }[]> {
+    try {
+      logger.info({ userAddress }, 'Fetching tips by user');
+      
+      // Query TipReceived events where tipper is the user
+      const filter = this.readOnlyTippingContract.filters.TipReceived(
+        null, // any tokenId
+        userAddress, // tipper
+        null // any broadcaster
+      );
+      
+      // Get current block and query last 9000 blocks (leave buffer for finalization)
+      const currentBlock = await this.provider.getBlockNumber();
+      const toBlock = currentBlock - 10; // Buffer for block finalization
+      const fromBlock = Math.max(0, toBlock - 9000);
+      const events = await this.readOnlyTippingContract.queryFilter(filter, fromBlock, toBlock);
+      
+      const tips = await Promise.all(
+        events.map(async (event) => {
+          const block = await event.getBlock();
+          const args = (event as any).args; // Cast to access event args
+          return {
+            tokenId: args?.tokenId?.toString() || '0',
+            tipper: args?.tipper || userAddress,
+            broadcaster: args?.broadcaster || '',
+            tipAmount: ethers.formatEther(args?.tipAmount || 0),
+            platformFee: ethers.formatEther(args?.platformFee || 0),
+            broadcasterAmount: ethers.formatEther(args?.broadcasterAmount || 0),
+            txHash: event.transactionHash,
+            blockNumber: event.blockNumber,
+            timestamp: block?.timestamp,
+          };
+        })
+      );
+      
+      logger.info({ userAddress, tipCount: tips.length }, 'Tips fetched');
+      return tips.sort((a, b) => b.blockNumber - a.blockNumber); // Most recent first
+    } catch (err) {
+      logger.error({ err, userAddress }, 'Failed to get tips by user');
       return [];
     }
   }

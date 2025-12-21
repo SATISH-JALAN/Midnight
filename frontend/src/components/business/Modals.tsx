@@ -71,7 +71,11 @@ export const Modals: React.FC<ModalsProps> = ({
             )}
 
             {type === 'TIP' && (
-               <TipModal onClose={onClose} />
+               <TipModal
+                  onClose={onClose}
+                  tokenId={modalProps?.tokenId}
+                  broadcaster={modalProps?.broadcaster}
+               />
             )}
 
             {type === 'ECHO' && (

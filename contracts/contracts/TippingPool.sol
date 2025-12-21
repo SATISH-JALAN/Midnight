@@ -10,13 +10,13 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * 
  * Features:
  * - Tip any voice note by token ID
- * - 5% platform fee to treasury
- * - 95% goes to broadcaster
+ * - 40% platform fee to treasury
+ * - 60% goes to broadcaster
  * - Events for backend tracking
  */
 contract TippingPool is Ownable, ReentrancyGuard {
     // Constants
-    uint256 public constant PLATFORM_FEE_BPS = 500; // 5% in basis points
+    uint256 public constant PLATFORM_FEE_BPS = 4000; // 40% in basis points
     uint256 public constant BPS_DENOMINATOR = 10000;
 
     // State
