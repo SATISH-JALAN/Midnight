@@ -27,6 +27,7 @@ export declare namespace EchoRegistry {
   export type EchoStruct = {
     echoNoteId: string;
     parentNoteId: string;
+    metadataUrl: string;
     echoBroadcaster: AddressLike;
     parentBroadcaster: AddressLike;
     timestamp: BigNumberish;
@@ -35,12 +36,14 @@ export declare namespace EchoRegistry {
   export type EchoStructOutput = [
     echoNoteId: string,
     parentNoteId: string,
+    metadataUrl: string,
     echoBroadcaster: string,
     parentBroadcaster: string,
     timestamp: bigint
   ] & {
     echoNoteId: string;
     parentNoteId: string;
+    metadataUrl: string;
     echoBroadcaster: string;
     parentBroadcaster: string;
     timestamp: bigint;
@@ -107,7 +110,7 @@ export interface EchoRegistryInterface extends Interface {
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "registerEcho",
-    values: [string, string, AddressLike]
+    values: [string, string, string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -288,9 +291,10 @@ export interface EchoRegistry extends BaseContract {
   echoesByParent: TypedContractMethod<
     [arg0: string, arg1: BigNumberish],
     [
-      [string, string, string, string, bigint] & {
+      [string, string, string, string, string, bigint] & {
         echoNoteId: string;
         parentNoteId: string;
+        metadataUrl: string;
         echoBroadcaster: string;
         parentBroadcaster: string;
         timestamp: bigint;
@@ -316,7 +320,12 @@ export interface EchoRegistry extends BaseContract {
   owner: TypedContractMethod<[], [string], "view">;
 
   registerEcho: TypedContractMethod<
-    [parentNoteId: string, echoNoteId: string, parentBroadcaster: AddressLike],
+    [
+      parentNoteId: string,
+      echoNoteId: string,
+      metadataUrl: string,
+      parentBroadcaster: AddressLike
+    ],
     [void],
     "payable"
   >;
@@ -364,9 +373,10 @@ export interface EchoRegistry extends BaseContract {
   ): TypedContractMethod<
     [arg0: string, arg1: BigNumberish],
     [
-      [string, string, string, string, bigint] & {
+      [string, string, string, string, string, bigint] & {
         echoNoteId: string;
         parentNoteId: string;
+        metadataUrl: string;
         echoBroadcaster: string;
         parentBroadcaster: string;
         timestamp: bigint;
@@ -399,7 +409,12 @@ export interface EchoRegistry extends BaseContract {
   getFunction(
     nameOrSignature: "registerEcho"
   ): TypedContractMethod<
-    [parentNoteId: string, echoNoteId: string, parentBroadcaster: AddressLike],
+    [
+      parentNoteId: string,
+      echoNoteId: string,
+      metadataUrl: string,
+      parentBroadcaster: AddressLike
+    ],
     [void],
     "payable"
   >;

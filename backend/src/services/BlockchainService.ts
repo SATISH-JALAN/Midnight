@@ -24,13 +24,14 @@ const TIPPING_POOL_ABI = [
   'event TipReceived(uint256 indexed tokenId, address indexed tipper, address indexed broadcaster, uint256 tipAmount, uint256 platformFee, uint256 broadcasterAmount)',
 ];
 
-// EchoRegistry ABI
+// EchoRegistry ABI - Updated to include metadataUrl for persistence
 const ECHO_REGISTRY_ABI = [
-  'function registerEcho(string parentNoteId, string echoNoteId, address parentBroadcaster) external payable',
+  'function registerEcho(string parentNoteId, string echoNoteId, string metadataUrl, address parentBroadcaster) external payable',
   'function getEchoFee() external pure returns (uint256)',
   'function getEchoCount(string parentNoteId) external view returns (uint256)',
   'function checkIsEcho(string noteId) external view returns (bool)',
   'function getParent(string echoNoteId) external view returns (string)',
+  'function getEchoes(string parentNoteId) external view returns (tuple(string echoNoteId, string parentNoteId, string metadataUrl, address echoBroadcaster, address parentBroadcaster, uint256 timestamp)[])',
   'event EchoRegistered(string indexed parentNoteId, string indexed echoNoteId, address echoBroadcaster, address parentBroadcaster, uint256 timestamp, uint256 creatorPayment, uint256 platformPayment)',
 ];
 
@@ -439,19 +440,21 @@ export class BlockchainService {
   async registerEcho(
     parentNoteId: string,
     echoNoteId: string,
+    metadataUrl: string,
     parentBroadcaster: string,
     echoBroadcaster: string
   ): Promise<{ txHash: string }> {
-    logger.info({ parentNoteId, echoNoteId, parentBroadcaster }, 'Registering echo on blockchain');
+    logger.info({ parentNoteId, echoNoteId, metadataUrl, parentBroadcaster }, 'Registering echo on blockchain');
 
     try {
       // Get the echo fee from contract
       const echoFee = await this.readOnlyEchoContract.getEchoFee();
 
-      // Register echo with payment
+      // Register echo with payment (now includes metadataUrl)
       const tx = await this.echoContract.registerEcho(
         parentNoteId,
         echoNoteId,
+        metadataUrl,
         parentBroadcaster,
         { value: echoFee }
       );
@@ -519,6 +522,36 @@ export class BlockchainService {
     } catch (err) {
       logger.warn({ err, echoNoteId }, 'Failed to get parent note ID');
       return null;
+    }
+  }
+
+  /**
+   * Get all echoes for a parent note from blockchain (persistent)
+   */
+  async getEchoesFromBlockchain(parentNoteId: string): Promise<{
+    echoNoteId: string;
+    parentNoteId: string;
+    metadataUrl: string;
+    echoBroadcaster: string;
+    parentBroadcaster: string;
+    timestamp: number;
+  }[]> {
+    try {
+      logger.info({ parentNoteId }, 'Fetching echoes from blockchain');
+      
+      const echoes = await this.readOnlyEchoContract.getEchoes(parentNoteId);
+      
+      return echoes.map((echo: any) => ({
+        echoNoteId: echo.echoNoteId,
+        parentNoteId: echo.parentNoteId,
+        metadataUrl: echo.metadataUrl,
+        echoBroadcaster: echo.echoBroadcaster,
+        parentBroadcaster: echo.parentBroadcaster,
+        timestamp: Number(echo.timestamp),
+      }));
+    } catch (err) {
+      logger.error({ err, parentNoteId }, 'Failed to get echoes from blockchain');
+      return [];
     }
   }
 }

@@ -26,6 +26,7 @@ contract EchoRegistry is Ownable, ReentrancyGuard {
     struct Echo {
         string echoNoteId;      // UUID of the echo note
         string parentNoteId;    // UUID of the parent note
+        string metadataUrl;     // IPFS metadata URL for audio retrieval
         address echoBroadcaster; // Address of echo creator
         address parentBroadcaster; // Address of parent creator
         uint256 timestamp;
@@ -64,6 +65,7 @@ contract EchoRegistry is Ownable, ReentrancyGuard {
     function registerEcho(
         string calldata parentNoteId,
         string calldata echoNoteId,
+        string calldata metadataUrl,
         address parentBroadcaster
     ) external payable nonReentrant {
         require(bytes(parentNoteId).length > 0, "Invalid parent ID");
@@ -84,6 +86,7 @@ contract EchoRegistry is Ownable, ReentrancyGuard {
         echoesByParent[parentNoteId].push(Echo({
             echoNoteId: echoNoteId,
             parentNoteId: parentNoteId,
+            metadataUrl: metadataUrl,
             echoBroadcaster: msg.sender,
             parentBroadcaster: parentBroadcaster,
             timestamp: block.timestamp

@@ -14,6 +14,14 @@ export interface Signal {
   // New Metadata
   broadcasterAddress?: string;
   hasAudio?: boolean;
+  // Audio playback fields
+  audioUrl?: string;
+  noteId?: string;
+  broadcaster?: string;
+  listenerCount?: number;
+  expiresAt?: string;
+  moodColor?: string;
+  waveform?: number[];
 }
 
 // Full NFT Interface for Collection/Details

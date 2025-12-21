@@ -22,26 +22,41 @@ streamRoutes.get('/', async (c) => {
     const blockchainNfts = await blockchainService.getAllNFTs(20);
     
     // Convert blockchain NFTs to Note format and merge
-    const blockchainNotes: Note[] = blockchainNfts
-      .filter(nft => !queueNoteIds.has(nft.noteId)) // Avoid duplicates
-      .map(nft => ({
-        noteId: nft.noteId,
-        tokenId: parseInt(nft.tokenId) || 0,
-        audioUrl: nft.audioUrl || '',
-        metadataUrl: nft.tokenURI || '',
-        duration: nft.duration || 0,
-        moodColor: nft.moodColor || '#0EA5E9',
-        waveform: nft.waveform || [],
-        timestamp: nft.createdAt ? new Date(nft.createdAt).getTime() : Date.now(),
-        expiresAt: nft.expiresAt ? new Date(nft.expiresAt).getTime() : Date.now() + 86400000,
-        broadcaster: nft.owner || '',
-        sector: nft.sector || 'Unknown Sector',
-        tips: nft.tips || 0,
-        echoes: nft.echoes || 0,
-      }));
+    const blockchainNotes: Note[] = await Promise.all(
+      blockchainNfts
+        .filter(nft => !queueNoteIds.has(nft.noteId)) // Avoid duplicates
+        .map(async (nft) => {
+          // Fetch echo count from blockchain
+          const echoCount = await blockchainService.getEchoCount(nft.noteId);
+          
+          return {
+            noteId: nft.noteId,
+            tokenId: parseInt(nft.tokenId) || 0,
+            audioUrl: nft.audioUrl || '',
+            metadataUrl: nft.tokenURI || '',
+            duration: nft.duration || 0,
+            moodColor: nft.moodColor || '#0EA5E9',
+            waveform: nft.waveform || [],
+            timestamp: nft.createdAt ? new Date(nft.createdAt).getTime() : Date.now(),
+            expiresAt: nft.expiresAt ? new Date(nft.expiresAt).getTime() : Date.now() + 86400000,
+            broadcaster: nft.owner || '',
+            sector: nft.sector || 'Unknown Sector',
+            tips: nft.tips || 0,
+            echoes: echoCount, // Get from blockchain
+          };
+        })
+    );
+
+    // Also update echo counts for queue notes from blockchain
+    const queueNotesWithEchoes = await Promise.all(
+      queueNotes.map(async (note) => {
+        const echoCount = await blockchainService.getEchoCount(note.noteId);
+        return { ...note, echoes: echoCount };
+      })
+    );
 
     // Merge: in-memory first (freshest), then blockchain
-    const allNotes = [...queueNotes, ...blockchainNotes];
+    const allNotes = [...queueNotesWithEchoes, ...blockchainNotes];
 
     return c.json({
       success: true,

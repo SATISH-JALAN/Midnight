@@ -51,7 +51,7 @@ export function useStreamAudio() {
 
       audioRef.current.onerror = (e) => {
         console.error('[StreamAudio] Error playing audio:', e);
-        addToast('Failed to play audio', 'error');
+        addToast('Failed to play audio', 'ERROR');
         setIsPlaying(false);
         setPlaybackTime(0, 0);
       };
@@ -76,10 +76,13 @@ export function useStreamAudio() {
     // Play audio
     console.log('[StreamAudio] Playing:', audioUrl);
     audioRef.current.play().catch((err) => {
-      console.error('[StreamAudio] Play failed:', err);
-      if (err.name !== 'AbortError') {
-        addToast('Failed to play audio', 'error');
+      // AbortError is normal when play is interrupted - ignore it completely
+      if (err.name === 'AbortError') {
+        console.log('[StreamAudio] Play interrupted (AbortError) - ignoring');
+        return;
       }
+      console.error('[StreamAudio] Play failed:', err);
+      addToast('Failed to play audio', 'ERROR');
       setIsPlaying(false);
       setPlaybackTime(0, 0);
     });

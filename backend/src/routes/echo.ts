@@ -93,12 +93,13 @@ echoRoutes.post('/:parentNoteId', async (c) => {
       audioHash: ipfsResult.audioHash 
     }, 'Echo uploaded to IPFS');
 
-    // 6. Register echo on blockchain
+    // 6. Register echo on blockchain (with metadataUrl for persistence)
     let txHash = '';
     try {
       const result = await blockchainService.registerEcho(
         parentNoteId,
         processResult.noteId,
+        ipfsResult.metadataUrl, // Store IPFS URL for retrieval
         parentBroadcaster!,
         walletAddress
       );
@@ -165,21 +166,80 @@ echoRoutes.post('/:parentNoteId', async (c) => {
 
 /**
  * GET /api/echo/:parentNoteId
- * Get all echoes for a parent note
+ * Get all echoes for a parent note (from blockchain for persistence)
  */
 echoRoutes.get('/:parentNoteId', async (c) => {
   try {
     const parentNoteId = c.req.param('parentNoteId');
     
-    // Get echoes from queue manager
-    const echoes = queueManager.getEchoes(parentNoteId);
+    // Get echoes from blockchain (persistent)
+    const blockchainEchoes = await blockchainService.getEchoesFromBlockchain(parentNoteId);
+    
+    // Also check in-memory queue for any echoes not yet on chain
+    const queueEchoes = queueManager.getEchoes(parentNoteId);
+    
+    // Convert blockchain echoes to frontend format with audio URLs
+    const formattedEchoes = await Promise.all(
+      blockchainEchoes.map(async (echo) => {
+        // Fetch metadata from IPFS to get audio URL
+        let audioUrl = '';
+        let duration = 0;
+        
+        try {
+          if (echo.metadataUrl) {
+            // Convert IPFS URL to gateway URL if needed
+            const gatewayUrl = echo.metadataUrl.startsWith('ipfs://')
+              ? echo.metadataUrl.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')
+              : echo.metadataUrl;
+            
+            const response = await fetch(gatewayUrl);
+            if (response.ok) {
+              const metadata = await response.json();
+              audioUrl = metadata.animation_url || metadata.audio || '';
+              // Convert audio IPFS URL to gateway
+              if (audioUrl.startsWith('ipfs://')) {
+                audioUrl = audioUrl.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+              }
+              duration = metadata.properties?.duration || 0;
+            }
+          }
+        } catch (err) {
+          logger.warn({ err, echoNoteId: echo.echoNoteId }, 'Failed to fetch echo metadata');
+        }
+        
+        return {
+          noteId: echo.echoNoteId,
+          audioUrl,
+          duration,
+          broadcaster: echo.echoBroadcaster,
+          timestamp: echo.timestamp * 1000, // Convert to ms
+          isEcho: true,
+          parentNoteId: echo.parentNoteId,
+        };
+      })
+    );
+    
+    // Merge with queue echoes (for any not yet on chain), avoiding duplicates
+    const blockchainNoteIds = new Set(formattedEchoes.map(e => e.noteId));
+    const mergedEchoes = [
+      ...formattedEchoes,
+      ...queueEchoes.filter(e => !blockchainNoteIds.has(e.noteId)).map(e => ({
+        noteId: e.noteId,
+        audioUrl: e.audioUrl,
+        duration: e.duration,
+        broadcaster: e.broadcaster,
+        timestamp: e.timestamp,
+        isEcho: true,
+        parentNoteId: e.parentNoteId,
+      })),
+    ];
     
     return c.json({
       success: true,
       data: {
         parentNoteId,
-        echoes,
-        count: echoes.length,
+        echoes: mergedEchoes,
+        count: mergedEchoes.length,
       },
     });
 

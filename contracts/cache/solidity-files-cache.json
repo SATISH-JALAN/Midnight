@@ -958,8 +958,8 @@
       ]
     },
     "C:\\Projects\\Midnight\\contracts\\contracts\\EchoRegistry.sol": {
-      "lastModificationDate": 1766257125392,
-      "contentHash": "d2ae94ae82ce25ad38dd723a9d884ab7",
+      "lastModificationDate": 1766264864609,
+      "contentHash": "4b54968ee24c59d6fcec18543f23ae29",
       "sourceName": "contracts/EchoRegistry.sol",
       "solcConfig": {
         "version": "0.8.20",
