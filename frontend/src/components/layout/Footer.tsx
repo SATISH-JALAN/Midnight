@@ -2,42 +2,13 @@ import React from 'react';
 import { gsap } from 'gsap';
 import { useRadioStore } from '@/store/useRadioStore';
 import { CloudRain, Volume2, Zap, Radio, Disc, Activity, Mic } from 'lucide-react';
+import { SecretHinter } from '@/components/ui/SecretHinter';
 import { cn } from '@/lib/utils';
 import { ViewType } from '@/types';
 
 export const Footer: React.FC = () => {
     const { activeView, setActiveView, ambient, setAmbient } = useRadioStore();
-    const mixerRef = React.useRef<HTMLDivElement>(null);
 
-    // Initial Animations
-    React.useEffect(() => {
-        const ctx = gsap.context(() => {
-            gsap.from(".mixer-channel", {
-                y: 20,
-                opacity: 0,
-                duration: 0.8,
-                stagger: 0.1,
-                ease: "back.out(1.7)",
-                delay: 0.5
-            });
-
-            // Random LED flicker effect - Only if elements exist
-            if (mixerRef.current?.querySelector(".led-segment.active")) {
-                gsap.to(".led-segment.active", {
-                    opacity: 0.8,
-                    duration: 0.1,
-                    repeat: -1,
-                    yoyo: true,
-                    repeatDelay: 2,
-                    stagger: {
-                        amount: 2,
-                        from: "random"
-                    }
-                });
-            }
-        }, mixerRef);
-        return () => ctx.revert();
-    }, []);
 
     // Konami Code Easter Egg
     React.useEffect(() => {
@@ -226,39 +197,11 @@ export const Footer: React.FC = () => {
             {/* Ambient Mixer (Left) */}
             <div className="flex items-center gap-8">
                 <div className="hidden md:block">
-                    <div className="text-[10px] text-accent-cyan font-mono tracking-[0.2em] uppercase mb-1 drop-shadow-glow">
-                        Ambient Field
-                    </div>
-                    <div className="text-[9px] text-ui-dim font-mono">
-                        AUDIO OVERLAY CONTROL
-                    </div>
+                    {/* Replaced by SecretHinter internal header */}
                 </div>
 
-                <div className="flex items-end gap-6 pb-2" ref={mixerRef}>
-                    <MixerChannel
-                        className="mixer-channel"
-                        icon={CloudRain}
-                        value={ambient.rainVolume}
-                        onChange={(v) => handleVolumeChange('rain', v)}
-                        color="cyan"
-                        label="RAIN"
-                    />
-                    <MixerChannel
-                        className="mixer-channel"
-                        icon={Volume2}
-                        value={ambient.cityVolume}
-                        onChange={(v) => handleVolumeChange('city', v)}
-                        color="purple"
-                        label="CITY"
-                    />
-                    <MixerChannel
-                        className="mixer-channel"
-                        icon={Zap}
-                        value={ambient.voidVolume}
-                        onChange={(v) => handleVolumeChange('void', v)}
-                        color="phosphor"
-                        label="VOID"
-                    />
+                <div className="h-[80px]">
+                    <SecretHinter />
                 </div>
             </div>
 

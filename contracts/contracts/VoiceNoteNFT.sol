@@ -18,8 +18,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract VoiceNoteNFT is ERC721, ERC721URIStorage, ERC721Royalty, Ownable {
     // Constants
-    uint256 public constant FREE_MINTS_PER_DAY = 3;
-    uint256 public constant MINT_FEE = 0.001 ether; // 0.001 MNT
+    uint256 public constant FREE_MINTS_PER_DAY = 1;
+    uint256 public constant MINT_FEE = 0.01 ether; // 0.01 MNT
     uint96 public constant ROYALTY_FEE = 250; // 2.5% (basis points)
 
     // State

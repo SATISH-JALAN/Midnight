@@ -16,8 +16,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract EchoRegistry is Ownable, ReentrancyGuard {
     // Constants
     uint256 public constant ECHO_FEE = 0.001 ether; // 0.001 MNT
-    uint256 public constant CREATOR_SHARE = 50; // 50% to parent creator
-    uint256 public constant PLATFORM_SHARE = 50; // 50% to platform
+    uint256 public constant CREATOR_SHARE = 20; // 20% to parent creator
+    uint256 public constant PLATFORM_SHARE = 80; // 80% to platform
 
     // State
     address public treasury;

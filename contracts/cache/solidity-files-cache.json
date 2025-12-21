@@ -917,8 +917,8 @@
       ]
     },
     "C:\\Projects\\Midnight\\contracts\\contracts\\VoiceNoteNFT.sol": {
-      "lastModificationDate": 1766079323130,
-      "contentHash": "3fc635c5e6b878804fdb990755ff6702",
+      "lastModificationDate": 1766302735808,
+      "contentHash": "4e10b24925f43ce72b3a919f6b31c84d",
       "sourceName": "contracts/VoiceNoteNFT.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -958,8 +958,8 @@
       ]
     },
     "C:\\Projects\\Midnight\\contracts\\contracts\\EchoRegistry.sol": {
-      "lastModificationDate": 1766264864609,
-      "contentHash": "4b54968ee24c59d6fcec18543f23ae29",
+      "lastModificationDate": 1766303337343,
+      "contentHash": "b475bfac074a127f8f9e8086d1206044",
       "sourceName": "contracts/EchoRegistry.sol",
       "solcConfig": {
         "version": "0.8.20",

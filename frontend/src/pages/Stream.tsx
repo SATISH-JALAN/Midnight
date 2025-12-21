@@ -48,7 +48,7 @@ export const StreamPage: React.FC = () => {
                         noteId: note.noteId,
                         audioUrl: note.audioUrl,
                         broadcaster: note.broadcaster,
-                        expiresAt: note.expiresAt,
+                        expiresAt: note.expiresAt?.toString(),
                         moodColor: note.moodColor,
                         waveform: note.waveform,
                     }));
@@ -67,8 +67,12 @@ export const StreamPage: React.FC = () => {
                 }
             } catch (err) {
                 console.error('Failed to fetch stream:', err);
-                // Use mock data as fallback
-                loadMockData();
+                // Only use mock data if we have no signals at all
+                if (useRadioStore.getState().signals.length === 0) {
+                    loadMockData();
+                } else {
+                    useRadioStore.getState().addToast("Connection lost - Showing cached data", "WARNING");
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -85,8 +89,9 @@ export const StreamPage: React.FC = () => {
     const loadMockData = () => {
         const SECTORS = ['7G-Delta', '2A-Echo', '9F-Whisper', '4X-Void'];
         const MOODS = ['CALM', 'EXCITED', 'MYSTERIOUS', 'URGENT', 'VOID'] as const;
+        // Generate STABLE mock IDs for easier debugging
         const mocks: Signal[] = Array.from({ length: 4 }).map((_, i) => ({
-            id: Math.floor(Math.random() * 10000 + 1000).toString(),
+            id: `mock-${1000 + i}`,
             source: SECTORS[Math.floor(Math.random() * SECTORS.length)],
             frequency: 432.0 + i,
             duration: `0${Math.floor(1 + i / 2)}:${(30 + i * 5) % 60}`,
