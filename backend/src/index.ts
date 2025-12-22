@@ -10,6 +10,7 @@ import { audioRoutes } from './routes/audio.js';
 import { collectionRoutes } from './routes/collection.js';
 import { echoRoutes } from './routes/echo.js';
 import { tipsRoutes } from './routes/tips.js';
+import { confirmRoutes } from './routes/confirm.js';
 import { wsManager } from './services/WebSocketManager.js';
 
 // Create Hono app
@@ -27,6 +28,7 @@ app.route('/api/audio', audioRoutes);
 app.route('/api/collection', collectionRoutes);
 app.route('/api/echo', echoRoutes);
 app.route('/api/tips', tipsRoutes);
+app.route('/api/mint', confirmRoutes);
 
 // Root endpoint
 app.get('/', (c) => {
@@ -41,6 +43,7 @@ app.get('/', (c) => {
       stream: 'GET /api/stream',
       audio: 'GET /api/audio/:noteId',
       echo: 'POST /api/echo/:parentNoteId',
+      mintConfirm: 'POST /api/mint/confirm',
       ws: 'WS /ws',
     },
   });

@@ -195,7 +195,39 @@ export const MainLayout: React.FC = () => {
 
             console.log('[Mint] NFT minted! TX:', mintResult.txHash);
 
-            // Step 5: Success!
+            // Step 5: Confirm mint with backend to add to stream
+            // This ensures the note only appears after on-chain confirmation
+            try {
+                const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+                const confirmRes = await fetch(`${API_BASE}/api/mint/confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        txHash: mintResult.txHash,
+                        noteId,
+                        audioUrl: uploadResponse.data.audioUrl,
+                        metadataUrl,
+                        broadcaster: address,
+                        duration: uploadResponse.data.duration,
+                        moodColor: uploadResponse.data.moodColor,
+                        waveform: uploadResponse.data.waveform,
+                        expiresAt: uploadResponse.data.expiresAt,
+                        sector: uploadResponse.data.sector,
+                        chainId: nftMint.chainId,
+                    }),
+                });
+                const confirmData = await confirmRes.json();
+                if (!confirmData.success) {
+                    console.warn('[Mint] Confirm API failed:', confirmData.error);
+                    // Don't fail the whole flow, NFT is already minted
+                }
+                console.log('[Mint] Note added to stream');
+            } catch (confirmErr) {
+                console.warn('[Mint] Failed to confirm with backend:', confirmErr);
+                // NFT is already minted, stream add is non-critical
+            }
+
+            // Step 6: Success!
             setMintingStatus('SUCCESS');
             addToast(`Transmission broadcast! TX: ${mintResult.txHash.slice(0, 10)}...`, 'SUCCESS');
 

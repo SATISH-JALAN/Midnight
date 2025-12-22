@@ -30,11 +30,24 @@ const config: HardhatUserConfig = {
       chainId: 5000,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
+    // Arbitrum Networks
+    arbitrumSepolia: {
+      url: process.env.ARBITRUM_SEPOLIA_RPC || "https://sepolia-rollup.arbitrum.io/rpc",
+      chainId: 421614,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    arbitrumOne: {
+      url: process.env.ARBITRUM_MAINNET_RPC || "https://arb1.arbitrum.io/rpc",
+      chainId: 42161,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
   },
   etherscan: {
     apiKey: {
       mantleTestnet: "no-api-key-needed",
       mantle: "no-api-key-needed",
+      arbitrumSepolia: process.env.ARBISCAN_API_KEY || "",
+      arbitrumOne: process.env.ARBISCAN_API_KEY || "",
     },
     customChains: [
       {
@@ -51,6 +64,22 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.mantlescan.xyz/api",
           browserURL: "https://mantlescan.xyz",
+        },
+      },
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia.arbiscan.io",
+        },
+      },
+      {
+        network: "arbitrumOne",
+        chainId: 42161,
+        urls: {
+          apiURL: "https://api.arbiscan.io/api",
+          browserURL: "https://arbiscan.io",
         },
       },
     ],

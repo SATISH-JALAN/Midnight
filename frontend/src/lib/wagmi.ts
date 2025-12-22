@@ -47,8 +47,31 @@ export const mantleMainnet = defineChain({
   testnet: false,
 });
 
-// Chain configuration
-const appChains = [mantleSepolia, mantleMainnet] as const;
+// Define Arbitrum Sepolia Testnet
+export const arbitrumSepolia = defineChain({
+  id: 421614,
+  name: 'Arbitrum Sepolia',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ethereum',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://sepolia-rollup.arbitrum.io/rpc'],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'Arbiscan',
+      url: 'https://sepolia.arbiscan.io',
+    },
+  },
+  testnet: true,
+});
+
+// Chain configuration - Testnets first for development
+const appChains = [mantleSepolia, arbitrumSepolia, mantleMainnet] as const;
 
 export const config = getDefaultConfig({
   appName: 'Midnight Radio',
@@ -57,9 +80,16 @@ export const config = getDefaultConfig({
   transports: {
     [mantleSepolia.id]: http(),
     [mantleMainnet.id]: http(),
+    [arbitrumSepolia.id]: http(),
   },
   ssr: false,
 });
 
 // Export chains for use elsewhere
 export { appChains as chains };
+
+// Helper to get chain by ID
+export function getChainById(chainId: number) {
+  return appChains.find(c => c.id === chainId);
+}
+

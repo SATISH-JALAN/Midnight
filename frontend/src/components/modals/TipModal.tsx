@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { X, Zap, Check, AlertTriangle } from 'lucide-react';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { parseEther } from 'viem';
-import { TIPPING_POOL_ADDRESS, TIPPING_POOL_ABI } from '@/lib/contracts';
+import { TIPPING_POOL_ABI, getTippingPoolAddress } from '@/lib/contracts';
+import { getChainConfig } from '@/lib/chains';
 
 interface TipModalProps {
     onClose: () => void;
@@ -13,6 +14,9 @@ interface TipModalProps {
 export const TipModal: React.FC<TipModalProps> = ({ onClose, tokenId = 0, broadcaster }) => {
     const [tipAmount, setTipAmount] = useState<number | null>(null);
     const [customTip, setCustomTip] = useState('');
+    const chainId = useChainId();
+    const chainConfig = useMemo(() => getChainConfig(chainId), [chainId]);
+    const tippingAddress = useMemo(() => getTippingPoolAddress(chainId), [chainId]);
 
     // Real blockchain transaction
     const { writeContract, data: hash, isPending, error } = useWriteContract();
@@ -33,7 +37,7 @@ export const TipModal: React.FC<TipModalProps> = ({ onClose, tokenId = 0, broadc
         try {
             // @ts-ignore - wagmi types are strict about chain/account which come from config
             writeContract({
-                address: TIPPING_POOL_ADDRESS,
+                address: tippingAddress,
                 abi: TIPPING_POOL_ABI,
                 functionName: 'tip',
                 args: [BigInt(tokenId), broadcaster as `0x${string}`],
@@ -67,7 +71,7 @@ export const TipModal: React.FC<TipModalProps> = ({ onClose, tokenId = 0, broadc
             <h2 className="font-display font-bold text-xl text-white mb-2 flex items-center justify-center gap-2">
                 <Zap size={20} className="text-accent-orange fill-accent-orange" /> SEND TIP
             </h2>
-            <p className="font-mono text-xs text-ui-dim mb-4">Support this broadcast (MNT)</p>
+            <p className="font-mono text-xs text-ui-dim mb-4">Support this broadcast ({chainConfig.nativeCurrency.symbol})</p>
 
             {error && (
                 <div className="mb-4 p-2 bg-red-500/20 border border-red-500/50 rounded flex items-center gap-2 text-xs text-red-400">

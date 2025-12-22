@@ -13,10 +13,11 @@ interface EchoModalProps {
     onMint: () => void;
     mintingStatus: MintingStatus;
     currentSignal: Signal | null;
+    isEcho?: boolean; // true = echo reply, false = broadcast
 }
 
 export const EchoModal: React.FC<EchoModalProps> = ({
-    onClose, isRecording, recordingTime, audioUrl, onRecordStart, onRecordStop, onMint, mintingStatus, currentSignal
+    onClose, isRecording, recordingTime, audioUrl, onRecordStart, onRecordStop, onMint, mintingStatus, currentSignal, isEcho = true
 }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -87,9 +88,9 @@ export const EchoModal: React.FC<EchoModalProps> = ({
                         : "bg-accent-purple/20 text-accent-purple border border-accent-purple/30"
                 )}>
                     <Radio size={14} className={isRecording ? 'animate-spin' : ''} />
-                    🔊 ECHO REPLY
+                    {isEcho ? '🔊 ECHO REPLY' : '📡 BROADCAST'}
                 </div>
-                {currentSignal && (
+                {isEcho && currentSignal && (
                     <div className="mt-3 text-center">
                         <p className="font-mono text-[10px] text-ui-dim">REPLYING TO</p>
                         <p className="font-display text-sm text-white mt-1">
@@ -240,7 +241,7 @@ export const EchoModal: React.FC<EchoModalProps> = ({
                                     className="w-full h-14 bg-gradient-to-r from-accent-phosphor to-green-400 text-black font-bold font-display tracking-wider rounded-xl flex items-center justify-center gap-2 hover:from-green-400 hover:to-accent-phosphor transition-all shadow-lg shadow-green-900/30 hover:scale-[1.02]"
                                 >
                                     <Waves size={18} />
-                                    TRANSMIT ECHO
+                                    {isEcho ? 'TRANSMIT ECHO' : 'BROADCAST SIGNAL'}
                                 </button>
                                 <button
                                     onClick={handleReRecord}

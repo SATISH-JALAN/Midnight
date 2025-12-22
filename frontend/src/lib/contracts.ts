@@ -1,12 +1,43 @@
 /**
  * Smart Contract Configuration for Midnight Radio
  * 
- * Deployed on Mantle Sepolia Testnet
+ * Multi-chain support: Mantle Sepolia + Arbitrum Sepolia
  */
 
-// Contract Addresses (Mantle Sepolia) - Properly checksummed (EIP-55)
-export const VOICE_NOTE_NFT_ADDRESS = '0x0b118a0F67D6F2329ad993A844549aED4cEa0E15' as const;
-export const TIPPING_POOL_ADDRESS = '0x3543243e2dD9027d8f7Ad53373f31d155ffc410F' as const;
+import { getContractAddress, DEFAULT_CHAIN_ID } from './chains';
+
+// ============================================
+// LEGACY EXPORTS (for backward compatibility)
+// These use the default chain (Mantle Sepolia)
+// ============================================
+export const VOICE_NOTE_NFT_ADDRESS = getContractAddress(DEFAULT_CHAIN_ID, 'voiceNoteNFT');
+export const TIPPING_POOL_ADDRESS = getContractAddress(DEFAULT_CHAIN_ID, 'tippingPool');
+export const ECHO_REGISTRY_ADDRESS = getContractAddress(DEFAULT_CHAIN_ID, 'echoRegistry');
+
+// ============================================
+// DYNAMIC ADDRESS GETTERS (for multi-chain)
+// ============================================
+export function getVoiceNoteNFTAddress(chainId: number | undefined): `0x${string}` {
+  return getContractAddress(chainId, 'voiceNoteNFT');
+}
+
+export function getTippingPoolAddress(chainId: number | undefined): `0x${string}` {
+  return getContractAddress(chainId, 'tippingPool');
+}
+
+export function getEchoRegistryAddress(chainId: number | undefined): `0x${string}` {
+  return getContractAddress(chainId, 'echoRegistry');
+}
+
+// ============================================
+// CHAIN IDs
+// ============================================
+export const MANTLE_SEPOLIA_CHAIN_ID = 5003;
+export const ARBITRUM_SEPOLIA_CHAIN_ID = 421614;
+
+// ============================================
+// ABIs (same for all chains - contracts are identical)
+// ============================================
 
 // VoiceNoteNFT ABI (only functions we need for frontend)
 export const VOICE_NOTE_NFT_ABI = [
@@ -83,5 +114,32 @@ export const TIPPING_POOL_ABI = [
   },
 ] as const;
 
-// Chain ID for Mantle Sepolia
-export const MANTLE_SEPOLIA_CHAIN_ID = 5003;
+// EchoRegistry ABI
+export const ECHO_REGISTRY_ABI = [
+  {
+    name: 'registerEcho',
+    type: 'function',
+    stateMutability: 'payable',
+    inputs: [
+      { name: 'parentNoteId', type: 'string' },
+      { name: 'echoNoteId', type: 'string' },
+      { name: 'metadataUrl', type: 'string' },
+      { name: 'parentBroadcaster', type: 'address' },
+    ],
+    outputs: [],
+  },
+  {
+    name: 'getEchoFee',
+    type: 'function',
+    stateMutability: 'pure',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    name: 'getEchoCount',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'parentNoteId', type: 'string' }],
+    outputs: [{ type: 'uint256' }],
+  },
+] as const;

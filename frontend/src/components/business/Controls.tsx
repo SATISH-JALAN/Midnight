@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Wallet, Radio, Activity, Settings, Power, Volume2, Signal, Wifi } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { gsap } from 'gsap';
+import { ChainSwitcher } from '@/components/ui/ChainSwitcher';
 
 interface HeaderProps {
   listenerCount: number;
@@ -135,8 +136,9 @@ export const Header: React.FC<HeaderProps> = ({ listenerCount }) => {
         </div>
       </div>
 
-      {/* Wallet Button - ENHANCED UI using RainbowKit */}
-      <div className="relative z-50">
+      {/* Chain Switcher + Wallet Button */}
+      <div className="flex items-center gap-3">
+        <ChainSwitcher />
         <ConnectButton.Custom>
           {({
             account,

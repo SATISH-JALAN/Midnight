@@ -1,10 +1,7 @@
 import { Hono } from 'hono';
 import { audioProcessor } from '../services/AudioProcessor.js';
 import { ipfsService } from '../services/IPFSService.js';
-import { queueManager } from '../services/QueueManager.js';
-import { wsManager } from '../services/WebSocketManager.js';
 import { logger } from '../config/logger.js';
-import type { Note } from '../types/index.js';
 
 export const uploadRoutes = new Hono();
 
@@ -53,40 +50,23 @@ uploadRoutes.post('/', async (c) => {
       audioHash: ipfsResult.audioHash 
     }, 'Uploaded to IPFS');
 
-    // 5. Create note object
-    const note: Note = {
-      noteId: processResult.noteId,
-      tokenId: 0, // Will be set after NFT minting (Phase 6)
-      audioUrl: ipfsResult.audioUrl,
-      metadataUrl: ipfsResult.metadataUrl,
-      duration: processResult.duration,
-      moodColor: '#0EA5E9',
-      waveform: processResult.waveform,
-      timestamp: Date.now(),
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-      broadcaster: walletAddress,
-      sector: `Sector-${Math.floor(Math.random() * 9) + 1}`,
-      tips: 0,
-      echoes: 0,
-    };
+    // NOTE: We do NOT add to queue here anymore.
+    // The note is only added after the NFT mint confirms on-chain.
+    // See /api/mint/confirm endpoint.
 
-    // 6. Add to queue
-    queueManager.addNote(note);
-
-    // 7. Broadcast new note to all WebSocket clients
-    wsManager.broadcastNewNote(note);
-
-    // 7. Return success response
+    // Return success response with IPFS data for frontend to use in minting
     return c.json({
       success: true,
       data: {
-        noteId: note.noteId,
-        audioUrl: note.audioUrl,
-        metadataUrl: note.metadataUrl,
-        duration: note.duration,
-        moodColor: note.moodColor,
-        expiresAt: note.expiresAt,
-        sector: note.sector,
+        noteId: processResult.noteId,
+        audioUrl: ipfsResult.audioUrl,
+        metadataUrl: ipfsResult.metadataUrl,
+        duration: processResult.duration,
+        moodColor: '#0EA5E9',
+        waveform: processResult.waveform,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+        sector: `Sector-${Math.floor(Math.random() * 9) + 1}`,
+        broadcaster: walletAddress,
       },
     });
 

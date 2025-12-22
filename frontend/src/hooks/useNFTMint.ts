@@ -1,17 +1,16 @@
 /**
- * Hook for minting Voice Note NFTs on Mantle
- * Uses wagmi for client-side transaction signing
+ * Hook for minting Voice Note NFTs
+ * Multi-chain support: Uses wagmi for client-side transaction signing
+ * Dynamically uses the currently connected chain's contract address
  */
 
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId } from 'wagmi';
 import { parseEther } from 'viem';
-import { useState, useCallback } from 'react';
-import { 
-  VOICE_NOTE_NFT_ADDRESS, 
-  VOICE_NOTE_NFT_ABI,
-  MANTLE_SEPOLIA_CHAIN_ID 
-} from '@/lib/contracts';
-import { mantleSepolia } from '@/lib/wagmi';
+import { useState, useCallback, useMemo } from 'react';
+import { VOICE_NOTE_NFT_ABI } from '@/lib/contracts';
+import { getVoiceNoteNFTAddress } from '@/lib/contracts';
+import { getChainById } from '@/lib/wagmi';
+import { getChainConfig } from '@/lib/chains';
 
 export interface MintResult {
   txHash: string;
@@ -26,10 +25,18 @@ export interface UseNFTMintReturn {
   isPending: boolean;
   isConfirming: boolean;
   error: string | null;
+  chainId: number;
+  nativeCurrency: string;
 }
 
 export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintReturn {
   const [error, setError] = useState<string | null>(null);
+  const chainId = useChainId();
+  
+  // Get dynamic contract address based on current chain
+  const nftAddress = useMemo(() => getVoiceNoteNFTAddress(chainId), [chainId]);
+  const chain = useMemo(() => getChainById(chainId), [chainId]);
+  const chainConfig = useMemo(() => getChainConfig(chainId), [chainId]);
 
   // Write contract hook
   const { 
@@ -43,9 +50,9 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
     hash: txHash,
   });
 
-  // Read mint fee
+  // Read mint fee - using dynamic address
   const { refetch: refetchMintFee } = useReadContract({
-    address: VOICE_NOTE_NFT_ADDRESS,
+    address: nftAddress,
     abi: VOICE_NOTE_NFT_ABI,
     functionName: 'getMintFee',
     args: userAddress ? [userAddress] : undefined,
@@ -54,9 +61,9 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
     },
   });
 
-  // Read free mints remaining
+  // Read free mints remaining - using dynamic address
   const { refetch: refetchFreeMints } = useReadContract({
-    address: VOICE_NOTE_NFT_ADDRESS,
+    address: nftAddress,
     abi: VOICE_NOTE_NFT_ABI,
     functionName: 'getFreeMintRemaining',
     args: userAddress ? [userAddress] : undefined,
@@ -69,19 +76,19 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
     if (!userAddress) return BigInt(0);
     try {
       const result = await refetchMintFee();
-      console.log('[useNFTMint] getMintFee result:', result);
+      console.log('[useNFTMint] getMintFee result:', result, 'on chain:', chainId);
       
       if (result.data !== undefined && result.data !== null) {
         return result.data as bigint;
       }
       // If we can't read the fee, assume paid mint
       console.warn('[useNFTMint] Could not read mint fee, using default');
-      return parseEther('0.001');
+      return parseEther('0.01');
     } catch (err) {
       console.error('[useNFTMint] Failed to get mint fee:', err);
-      return parseEther('0.001'); // Default fee
+      return parseEther('0.01'); // Default fee
     }
-  }, [userAddress, refetchMintFee]);
+  }, [userAddress, refetchMintFee, chainId]);
 
   const getFreeMints = useCallback(async (): Promise<number> => {
     if (!userAddress) return 0;
@@ -106,25 +113,25 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
       return { txHash: '', success: false, error: 'Wallet not connected' };
     }
 
-    console.log('[useNFTMint] Starting mint...', { noteId, metadataUrl, userAddress });
+    console.log('[useNFTMint] Starting mint...', { noteId, metadataUrl, userAddress, chainId, nftAddress });
 
     try {
       // Get mint fee
       const mintFee = await getMintFee();
       console.log('[useNFTMint] Mint fee:', mintFee.toString());
 
-      // Call mint function - using type assertion to fix wagmi typing
+      // Call mint function - uses current chain
       const hash = await writeContractAsync({
-        address: VOICE_NOTE_NFT_ADDRESS,
+        address: nftAddress,
         abi: VOICE_NOTE_NFT_ABI,
         functionName: 'mint',
         args: [userAddress, noteId, metadataUrl],
         value: mintFee,
-        chain: mantleSepolia,
+        chain: chain,
         account: userAddress,
       } as any);
 
-      console.log('[useNFTMint] Transaction submitted:', hash);
+      console.log('[useNFTMint] Transaction submitted:', hash, 'on chain:', chainId);
 
       return {
         txHash: hash,
@@ -133,12 +140,12 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
     } catch (err: any) {
       console.error('[useNFTMint] Mint failed:', err);
       
-      // Parse common errors
+      // Parse common errors with chain-aware messaging
       let errorMessage = 'Minting failed';
       if (err.message?.includes('User rejected')) {
         errorMessage = 'Transaction rejected by user';
       } else if (err.message?.includes('insufficient funds')) {
-        errorMessage = 'Insufficient MNT for gas';
+        errorMessage = `Insufficient ${chainConfig.nativeCurrency.symbol} for gas`;
       } else if (err.shortMessage) {
         errorMessage = err.shortMessage;
       }
@@ -146,7 +153,7 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
       setError(errorMessage);
       return { txHash: '', success: false, error: errorMessage };
     }
-  }, [userAddress, getMintFee, writeContractAsync]);
+  }, [userAddress, getMintFee, writeContractAsync, nftAddress, chain, chainId, chainConfig]);
 
   return {
     mint,
@@ -155,5 +162,7 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
     isPending,
     isConfirming,
     error,
+    chainId,
+    nativeCurrency: chainConfig.nativeCurrency.symbol,
   };
 }

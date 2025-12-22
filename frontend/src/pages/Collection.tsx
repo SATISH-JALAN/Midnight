@@ -3,7 +3,7 @@ import { useRadioStore } from '@/store/useRadioStore';
 import { Gallery } from '@/components/business/Gallery';
 import { VoiceNoteNFT } from '@/types';
 import { fetchCollection, CollectionNFT } from '@/services/api';
-import { useAccount } from 'wagmi';
+import { useAccount, useChainId } from 'wagmi';
 import { WalletGate } from '@/components/WalletGate';
 import { Zap, Radio, ExternalLink } from 'lucide-react';
 
@@ -21,6 +21,7 @@ interface Tip {
 
 export const CollectionPage: React.FC = () => {
     const { address, isConnected } = useAccount();
+    const chainId = useChainId();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'signals' | 'tips'>('signals');
@@ -45,7 +46,7 @@ export const CollectionPage: React.FC = () => {
             setError(null);
 
             try {
-                const response = await fetchCollection(address);
+                const response = await fetchCollection(address, chainId);
 
                 if (response.success && response.data) {
                     // Transform backend NFT format to frontend VoiceNoteNFT format
@@ -85,7 +86,7 @@ export const CollectionPage: React.FC = () => {
         };
 
         loadCollection();
-    }, [address, isConnected, setUserNFTs]);
+    }, [address, isConnected, setUserNFTs, chainId]);
 
     // Fetch tips when tab changes
     useEffect(() => {

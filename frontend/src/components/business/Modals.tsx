@@ -107,6 +107,7 @@ export const Modals: React.FC<ModalsProps> = ({
                   onMint={onMint}
                   mintingStatus={mintingStatus}
                   currentSignal={currentSignal}
+                  isEcho={false}
                />
             )}
          </div>

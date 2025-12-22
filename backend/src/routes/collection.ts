@@ -34,7 +34,16 @@ function formatNFTForFrontend(nft: NFTData) {
     tips: nft.tips || 0,
     echoes: nft.echoes || 0,
     isGhost: nft.isGhost || false,
+    chainId: nft.chainId,
   };
+}
+
+/**
+ * Extract chainId from query parameters
+ */
+function getChainId(c: any): number | undefined {
+  const chainIdParam = c.req.query('chainId');
+  return chainIdParam ? parseInt(chainIdParam, 10) : undefined;
 }
 
 /**
@@ -82,11 +91,12 @@ collectionRoutes.get('/:address', async (c) => {
     return c.json({ success: false, error: 'Wallet address required' }, 400);
   }
 
-  logger.info({ address }, 'Fetching collection for address');
+  const chainId = getChainId(c);
+  logger.info({ address, chainId }, 'Fetching collection for address');
 
   try {
     // PRIMARY: Get NFTs from blockchain (permanent storage)
-    const blockchainNfts = await blockchainService.getNFTsByOwner(address);
+    const blockchainNfts = await blockchainService.getNFTsByOwner(address, chainId);
     
     if (blockchainNfts.length > 0) {
       const formattedNfts = blockchainNfts.map(formatNFTForFrontend);
@@ -148,9 +158,10 @@ collectionRoutes.get('/:address', async (c) => {
  * FALLBACK: In-memory queue
  */
 collectionRoutes.get('/', async (c) => {
+  const chainId = getChainId(c);
   try {
     // PRIMARY: Get all NFTs from blockchain
-    const blockchainNfts = await blockchainService.getAllNFTs(50);
+    const blockchainNfts = await blockchainService.getAllNFTs(50, chainId);
     
     if (blockchainNfts.length > 0) {
       const formattedNfts = blockchainNfts.map(formatNFTForFrontend);

@@ -141,9 +141,10 @@ export interface CollectionResponse {
 /**
  * Fetch user's NFT collection
  */
-export async function fetchCollection(walletAddress: string): Promise<CollectionResponse> {
+export async function fetchCollection(walletAddress: string, chainId?: number): Promise<CollectionResponse> {
   try {
-    const response = await fetch(`${API_BASE}/api/collection/${walletAddress}`);
+    const params = chainId ? `?chainId=${chainId}` : '';
+    const response = await fetch(`${API_BASE}/api/collection/${walletAddress}${params}`);
     return response.json();
   } catch (err) {
     console.error('[API] Failed to fetch collection:', err);
@@ -154,9 +155,10 @@ export async function fetchCollection(walletAddress: string): Promise<Collection
 /**
  * Fetch all NFTs (for explore)
  */
-export async function fetchAllNFTs(): Promise<CollectionResponse> {
+export async function fetchAllNFTs(chainId?: number): Promise<CollectionResponse> {
   try {
-    const response = await fetch(`${API_BASE}/api/collection`);
+    const params = chainId ? `?chainId=${chainId}` : '';
+    const response = await fetch(`${API_BASE}/api/collection${params}`);
     return response.json();
   } catch (err) {
     console.error('[API] Failed to fetch all NFTs:', err);
