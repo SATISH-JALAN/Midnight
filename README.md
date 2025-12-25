@@ -1,17 +1,21 @@
-# 🎙️ MIDNIGHT RADIO
-
-> **"Scream into the void, and let the blockchain echo back."**
-
-**Live Demo:** [https://midnight-radio.vercel.app](https://midnight-radio.vercel.app) *(Coming Soon)*  
-**Contract (Mantle):** [0x0b118a0F67D6F2329ad993A844549aED4cEa0E15](https://sepolia.mantlescan.xyz/address/0x0b118a0F67D6F2329ad993A844549aED4cEa0E15)  
-**Contract (Arbitrum):** [0xA3505e375C6d8CB1f0b3C934b30b93EF8f3211c5](https://sepolia.arbiscan.io/address/0xA3505e375C6d8CB1f0b3C934b30b93EF8f3211c5)
+<br/>
+<p align="center">
+  <img src="frontend/public/midnight1.jpeg" alt="Midnight Radio Logo" width="400" />
+</p>
 
 <p align="center">
-  <img src="frontend/public/midnight1.jpeg" alt="Midnight Radio Logo" width="120" />
-  <br/>
-  <br/>
-  <span style="letter-spacing: 0.5em; font-size: 1.2em; color: #888;">EPHEMERA</span>
+  <em>"Scream into the void, and let the blockchain echo back."</em>
 </p>
+
+<p align="center">
+  <a href="https://midnight-radio.vercel.app"><strong>Live Demo</strong></a>
+  ·
+  <a href="https://sepolia.mantlescan.xyz/address/0x0b118a0F67D6F2329ad993A844549aED4cEa0E15">Mantle Contract</a>
+  ·
+  <a href="https://sepolia.arbiscan.io/address/0xA3505e375C6d8CB1f0b3C934b30b93EF8f3211c5">Arbitrum Contract</a>
+</p>
+
+<br/>
 
 ---
 
