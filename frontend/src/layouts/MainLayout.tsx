@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from '@/components/business/Controls';
 import { Footer } from '@/components/layout/Footer';
 import { Modals } from '@/components/business/Modals';
 import { ToastContainer } from '@/components/business/Toast';
 import { ParticleField, ChannelSwitchOverlay } from '@/components/ui/Effects';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useRadioStore } from '@/store/useRadioStore';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
@@ -17,6 +18,7 @@ export const MainLayout: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [transitionTrigger, setTransitionTrigger] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
     const { openConnectModal } = useConnectModal();
     const recorder = useAudioRecorder();
     const { isConnected: wsConnected } = useWebSocket();
@@ -249,14 +251,26 @@ export const MainLayout: React.FC = () => {
         }
     };
 
-    return (
-        <div className="relative w-screen h-screen bg-space-black text-ui-text font-sans overflow-hidden flex flex-col selection:bg-accent-phosphor selection:text-black">
-            <ChannelSwitchOverlay trigger={transitionTrigger} />
+    // Memoize completion handler to prevent LoadingScreen re-renders/looping
+    const handleLoadingComplete = useCallback(() => {
+        setIsLoading(false);
+    }, []);
 
-            {/* Background Layers */}
-            <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2672&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-screen" />
-            <ParticleField />
-            <div className="absolute inset-0 z-0 bg-vignette pointer-events-none" />
+    return (
+        <div className="relative w-screen h-screen bg-space-black text-white font-sans overflow-hidden flex flex-col selection:bg-accent-cyan selection:text-black">
+            {/* Loading Screen Overlay */}
+            {isLoading && (
+                <LoadingScreen onComplete={handleLoadingComplete} />
+            )}
+
+            {/* Ambient Background Effects */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2672&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-screen" />
+                <ParticleField />
+                <div className="absolute inset-0 z-0 bg-vignette pointer-events-none" />
+            </div>
+
+            <ChannelSwitchOverlay trigger={transitionTrigger} />
 
             {/* Main Container */}
             <div className="relative z-10 flex flex-col h-full max-w-[1600px] mx-auto w-full">
