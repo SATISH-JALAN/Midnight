@@ -21,7 +21,7 @@ export const Header: React.FC<HeaderProps> = ({ listenerCount }) => {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      setTime(now.toISOString().split('T')[1].split('.')[0] + ' UTC');
+      setTime(now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour12: false }) + ' IST');
     };
     const timer = setInterval(updateTime, 1000);
     updateTime();
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({ listenerCount }) => {
           <h1 className="font-logo font-bold text-3xl md:text-4xl text-white tracking-wider group-hover:text-accent-phosphor transition-colors glitch-text drop-shadow-[0_0_10px_rgba(0,0,0,0.8)] stroke-black">MIDNIGHT</h1>
           <div className="flex items-center gap-2 -mt-1">
             <div className="w-1.5 h-1.5 bg-accent-cyan rounded-full animate-pulse" />
-            <span className="font-mono text-[10px] text-ui-dim tracking-widest uppercase">Deep Space Relay</span>
+            <span className="font-mono text-[13px] text-ui-dim tracking-widest uppercase">E P H E M E R A</span>
           </div>
         </div>
       </div>
