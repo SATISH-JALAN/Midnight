@@ -192,10 +192,10 @@ export const Footer: React.FC = () => {
     ];
 
     return (
-        <footer className="relative z-50 bg-space-panel/80 backdrop-blur-xl border-t border-ui-border h-24 px-6 flex items-center justify-between shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.5)]">
+        <footer className="relative z-50 bg-space-panel/80 backdrop-blur-xl border-t border-ui-border h-16 md:h-24 px-4 md:px-6 flex items-center justify-between shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.5)]">
 
-            {/* Ambient Mixer (Left) */}
-            <div className="flex items-center gap-8">
+            {/* Ambient Mixer (Left) - Hidden on Mobile */}
+            <div className="hidden md:flex items-center gap-8">
                 <div className="hidden md:block">
                     {/* Replaced by SecretHinter internal header */}
                 </div>
@@ -205,8 +205,8 @@ export const Footer: React.FC = () => {
                 </div>
             </div>
 
-            {/* Main Navigation (Right/Center) */}
-            <div className="flex items-center gap-3 bg-black/20 p-1.5 rounded-full border border-white/5 backdrop-blur-sm">
+            {/* Main Navigation - Responsive */}
+            <div className="flex items-center gap-1 md:gap-3 bg-black/20 p-1 md:p-1.5 rounded-full border border-white/5 backdrop-blur-sm mx-auto md:mx-0">
                 {navItems.map((item) => (
                     <button
                         key={item.id}
@@ -217,7 +217,7 @@ export const Footer: React.FC = () => {
                             setActiveView(item.id);
                         }}
                         className={cn(
-                            "flex items-center gap-2 px-5 py-2.5 rounded-full font-display text-xs font-bold tracking-wide transition-all duration-300 relative overflow-hidden group",
+                            "flex items-center justify-center gap-2 p-3 md:px-5 md:py-2.5 rounded-full font-display text-xs font-bold tracking-wide transition-all duration-300 relative overflow-hidden group min-w-[44px] min-h-[44px]",
                             activeView === item.id
                                 ? "text-black shadow-[0_0_20px_rgba(6,182,212,0.4)]"
                                 : "text-ui-dim hover:text-white hover:bg-white/5"
@@ -227,8 +227,10 @@ export const Footer: React.FC = () => {
                             <div className="absolute inset-0 bg-accent-cyan animate-pulse-slow" />
                         )}
                         <span className="relative z-10 flex items-center gap-2">
-                            {item.icon}
-                            <span>{item.label}</span>
+                            {/* Icon - always visible */}
+                            <span className="w-5 h-5 flex items-center justify-center">{item.icon}</span>
+                            {/* Label - hidden on mobile */}
+                            <span className="hidden md:inline">{item.label}</span>
                         </span>
                     </button>
                 ))}

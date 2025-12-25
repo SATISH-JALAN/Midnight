@@ -63,8 +63,8 @@ export const TipModal: React.FC<TipModalProps> = ({ onClose, tokenId = 0, broadc
     return (
         <div className="w-full max-w-sm bg-space-navy border border-ui-border rounded-xl p-8 text-center relative overflow-hidden">
             {!isProcessing && !isSuccess && (
-                <button onClick={onClose} className="absolute top-3 right-3 text-ui-dim hover:text-white">
-                    <X size={18} />
+                <button onClick={onClose} className="absolute top-3 right-3 text-ui-dim hover:text-white p-2 md:p-1 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                    <X size={20} className="md:w-[18px] md:h-[18px]" />
                 </button>
             )}
 

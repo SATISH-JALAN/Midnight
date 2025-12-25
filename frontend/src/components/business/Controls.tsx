@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ listenerCount }) => {
     <header ref={headerRef} className="h-[70px] w-full flex items-center justify-between px-4 md:px-8 relative z-50 shrink-0">
       {/* Brand */}
       <div
-        className="flex items-center gap-4 cursor-pointer group select-none"
+        className="flex items-center gap-2 md:gap-4 cursor-pointer group select-none shrink-0"
         onClick={(e) => {
           // CRT Easter Egg
           if (e.detail === 3) {
@@ -105,21 +105,22 @@ export const Header: React.FC<HeaderProps> = ({ listenerCount }) => {
           }
         }}
       >
-        <div className="w-10 h-10 rounded border border-ui-border bg-space-panel flex items-center justify-center group-hover:border-accent-phosphor/50 transition-colors relative overflow-hidden">
-          <Radio ref={morseRef} className="text-accent-phosphor relative z-10" size={18} />
+        <div className="w-8 h-8 md:w-10 md:h-10 rounded border border-ui-border bg-space-panel flex items-center justify-center group-hover:border-accent-phosphor/50 transition-colors relative overflow-hidden shrink-0">
+          <Radio ref={morseRef} className="text-accent-phosphor relative z-10" size={16} />
           <div className="absolute inset-0 bg-accent-phosphor/10 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
         </div>
         <div>
-          {/* UPDATED LOGO FONT - Megrim */}
-          <h1 className="font-logo font-bold text-3xl md:text-4xl text-white tracking-wider group-hover:text-accent-phosphor transition-colors glitch-text drop-shadow-[0_0_10px_rgba(0,0,0,0.8)] stroke-black">MIDNIGHT</h1>
-          <div className="flex items-center gap-2 -mt-1">
+          {/* Responsive Logo */}
+          <h1 className="font-logo font-bold text-xl md:text-4xl text-white tracking-wider group-hover:text-accent-phosphor transition-colors glitch-text drop-shadow-[0_0_10px_rgba(0,0,0,0.8)] stroke-black">MIDNIGHT</h1>
+          {/* Hide EPHEMERA on mobile */}
+          <div className="hidden md:flex items-center gap-2 -mt-1">
             <div className="w-1.5 h-1.5 bg-accent-cyan rounded-full animate-pulse" />
             <span className="font-mono text-[13px] text-ui-dim tracking-widest uppercase">E P H E M E R A</span>
           </div>
         </div>
       </div>
 
-      {/* Center HUD Data */}
+      {/* Center HUD Data - Desktop Only */}
       <div className="hidden md:flex items-center gap-8 px-6 py-2 rounded-full border border-ui-border bg-space-panel/50 backdrop-blur-sm shadow-lg">
         <div className="flex items-center gap-3">
           <Wifi size={14} className="text-ui-dim" />

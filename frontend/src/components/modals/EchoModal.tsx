@@ -72,10 +72,10 @@ export const EchoModal: React.FC<EchoModalProps> = ({
                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-accent-cyan/10 rounded-full blur-[80px]" />
             </div>
 
-            {/* Close Button */}
+            {/* Close Button - Larger on Mobile */}
             {!isMinting && (
-                <button onClick={onClose} className="absolute top-4 right-4 z-20 text-ui-dim hover:text-white bg-black/20 hover:bg-black/40 p-2 rounded-full transition-all">
-                    <X size={18} />
+                <button onClick={onClose} className="absolute top-3 right-3 md:top-4 md:right-4 z-20 text-ui-dim hover:text-white bg-black/20 hover:bg-black/40 p-3 md:p-2 rounded-full transition-all min-w-[44px] min-h-[44px] flex items-center justify-center">
+                    <X size={20} className="md:w-[18px] md:h-[18px]" />
                 </button>
             )}
 

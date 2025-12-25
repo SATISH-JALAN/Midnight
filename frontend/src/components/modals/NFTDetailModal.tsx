@@ -105,7 +105,7 @@ export const NFTDetailModal: React.FC<NFTDetailModalProps> = ({ onClose, nft }) 
 
     return (
         <div className="w-full max-w-2xl bg-space-navy border border-ui-border rounded-xl overflow-hidden relative flex flex-col md:flex-row h-[500px] shadow-2xl">
-            <button onClick={onClose} className="absolute top-4 right-4 z-10 text-white bg-black/40 p-1.5 rounded-full hover:bg-white/20 transition-colors backdrop-blur"><X size={18} /></button>
+            <button onClick={onClose} className="absolute top-3 right-3 md:top-4 md:right-4 z-10 text-white bg-black/40 p-3 md:p-1.5 rounded-full hover:bg-white/20 transition-colors backdrop-blur min-w-[44px] min-h-[44px] flex items-center justify-center"><X size={20} className="md:w-[18px] md:h-[18px]" /></button>
 
             {/* Left: Visual & Player */}
             <div className="w-full md:w-1/2 bg-black/40 relative flex items-center justify-center p-8 bg-[url('https://images.unsplash.com/photo-1614726365723-49fa5389a37a?q=80&w=2574')] bg-cover bg-center">

@@ -520,10 +520,12 @@ const ActionBtn = ({ icon: Icon, label, onClick, color }: any) => {
       onMouseLeave={() => handleHover(false)}
       className="group flex flex-col items-center gap-1 md:gap-1.5"
     >
-      <div className={`p-2.5 md:p-3 rounded-full border border-ui-border bg-space-black group-hover:border-accent-${color} group-hover:text-accent-${color} transition-colors duration-300 shadow-lg`}>
-        <Icon size={16} className="md:w-[18px] md:h-[18px]" />
+      {/* Mobile: larger touch target (p-3.5), Desktop: original (p-3) */}
+      <div className={`p-3.5 md:p-3 rounded-full border border-ui-border bg-space-black group-hover:border-accent-${color} group-hover:text-accent-${color} transition-colors duration-300 shadow-lg active:scale-95`}>
+        {/* Mobile: 20px icon, Desktop: 16px + responsive classes */}
+        <Icon className="w-5 h-5 md:w-4 md:h-4" />
       </div>
-      <span className="font-mono text-[8px] md:text-[9px] text-ui-dim group-hover:text-white tracking-wider">{label}</span>
+      <span className="font-mono text-[9px] text-ui-dim group-hover:text-white tracking-wider">{label}</span>
     </button>
   );
 };

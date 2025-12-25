@@ -7,6 +7,7 @@ import { fetchStream } from '@/services/api';
 import { useAccount } from 'wagmi';
 import { WalletGate } from '@/components/WalletGate';
 import { useStreamAudio } from '@/hooks/useStreamAudio';
+import { Activity } from 'lucide-react';
 
 export const StreamPage: React.FC = () => {
     const {
@@ -20,6 +21,7 @@ export const StreamPage: React.FC = () => {
     } = useRadioStore();
 
     const [showMobileQueue, setShowMobileQueue] = useState(false);
+    const [showMobileStats, setShowMobileStats] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     // Enable audio playback for current signal
@@ -104,12 +106,38 @@ export const StreamPage: React.FC = () => {
                 <TelescopeInterface
                     onToggleQueue={() => setShowMobileQueue(true)}
                 />
+
+                {/* Mobile Stats Toggle Button */}
+                <button
+                    onClick={() => setShowMobileStats(true)}
+                    className="md:hidden absolute bottom-4 right-4 z-30 w-12 h-12 rounded-full bg-accent-cyan/20 border border-accent-cyan/50 flex items-center justify-center text-accent-cyan shadow-lg active:scale-95"
+                >
+                    <Activity size={20} />
+                </button>
             </div>
 
-            {/* Right Panel */}
+            {/* Right Panel - Desktop */}
             <div className={`hidden md:block w-full md:w-[250px] lg:w-[320px] h-full relative z-20`}>
                 <StatsPanel />
             </div>
+
+            {/* Right Panel - Mobile Overlay */}
+            {showMobileStats && (
+                <div className="md:hidden absolute inset-0 z-40 bg-space-black/95 backdrop-blur-xl flex flex-col">
+                    <div className="flex justify-between items-center p-4 border-b border-ui-border">
+                        <span className="font-display text-sm text-white">STATS & LEADERBOARD</span>
+                        <button
+                            onClick={() => setShowMobileStats(false)}
+                            className="p-2 text-ui-dim hover:text-white"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-auto">
+                        <StatsPanel />
+                    </div>
+                </div>
+            )}
         </>
     );
 };
