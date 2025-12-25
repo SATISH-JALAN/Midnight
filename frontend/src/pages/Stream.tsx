@@ -67,9 +67,9 @@ export const StreamPage: React.FC = () => {
                 }
             } catch (err) {
                 console.error('Failed to fetch stream:', err);
-                // Only use mock data if we have no signals at all
+                // Show error toast instead of mock data
                 if (useRadioStore.getState().signals.length === 0) {
-                    loadMockData();
+                    useRadioStore.getState().addToast("No signals available - Check your connection", "WARNING");
                 } else {
                     useRadioStore.getState().addToast("Connection lost - Showing cached data", "WARNING");
                 }
@@ -84,28 +84,6 @@ export const StreamPage: React.FC = () => {
         const interval = setInterval(loadStream, 30000);
         return () => clearInterval(interval);
     }, []);
-
-    // Fallback mock data
-    const loadMockData = () => {
-        const SECTORS = ['7G-Delta', '2A-Echo', '9F-Whisper', '4X-Void'];
-        const MOODS = ['CALM', 'EXCITED', 'MYSTERIOUS', 'URGENT', 'VOID'] as const;
-        // Generate STABLE mock IDs for easier debugging
-        const mocks: Signal[] = Array.from({ length: 4 }).map((_, i) => ({
-            id: `mock-${1000 + i}`,
-            source: SECTORS[Math.floor(Math.random() * SECTORS.length)],
-            frequency: 432.0 + i,
-            duration: `0${Math.floor(1 + i / 2)}:${(30 + i * 5) % 60}`,
-            timestamp: new Date().toISOString(),
-            mood: MOODS[i % MOODS.length],
-            tips: 0,
-            echoes: 0,
-            broadcasterAddress: '0x123...abc'
-        }));
-        setSignals(mocks);
-        if (mocks.length > 0) {
-            setCurrentSignal(mocks[0]);
-        }
-    };
 
     return (
         <>

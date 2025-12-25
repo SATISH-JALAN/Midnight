@@ -50,7 +50,7 @@ export function useWebSocket() {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('[WS] Connected');
+
         setIsConnected(true);
         isConnectingRef.current = false;
         // Clear any pending reconnect
@@ -78,7 +78,7 @@ export function useWebSocket() {
         // Only reconnect if not a normal closure
         if (event.code !== 1000) {
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('[WS] Reconnecting...');
+
             connect();
           }, 3000);
         }
@@ -99,7 +99,7 @@ export function useWebSocket() {
     
     switch (msg.type) {
       case 'connected':
-        console.log('[WS] Welcome:', msg.data);
+
         // Update listener count from server
         if (msg.data?.listenerCount !== undefined) {
           useRadioStore.setState({ listenerCount: msg.data.listenerCount });
@@ -128,7 +128,7 @@ export function useWebSocket() {
             noteId: newNote.noteId,
             audioUrl: newNote.audioUrl,
             broadcaster: newNote.broadcaster,
-            expiresAt: newNote.expiresAt,
+            expiresAt: new Date(newNote.expiresAt).toISOString(),
             moodColor: newNote.moodColor,
             waveform: newNote.waveform,
           },

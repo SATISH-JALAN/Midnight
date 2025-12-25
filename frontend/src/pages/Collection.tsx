@@ -95,7 +95,8 @@ export const CollectionPage: React.FC = () => {
 
             setTipsLoading(true);
             try {
-                const res = await fetch(`http://localhost:3001/api/tips/${address}`);
+                const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+                const res = await fetch(`${API_BASE}/api/tips/${address}`);
                 const data = await res.json();
                 if (data.success && data.data?.tips) {
                     setTips(data.data.tips);

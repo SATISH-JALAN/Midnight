@@ -44,7 +44,7 @@ export function useStreamAudio() {
       
       // Set up event listeners
       audioRef.current.onended = () => {
-        console.log('[StreamAudio] Track ended');
+
         setIsPlaying(false);
         setPlaybackTime(0, 0);
       };
@@ -58,7 +58,7 @@ export function useStreamAudio() {
 
       audioRef.current.onloadedmetadata = () => {
         const duration = audioRef.current?.duration || 0;
-        console.log('[StreamAudio] Audio loaded, duration:', duration);
+
         setPlaybackTime(0, duration);
       };
 
@@ -74,11 +74,11 @@ export function useStreamAudio() {
     }
 
     // Play audio
-    console.log('[StreamAudio] Playing:', audioUrl);
+
     audioRef.current.play().catch((err) => {
       // AbortError is normal when play is interrupted - ignore it completely
       if (err.name === 'AbortError') {
-        console.log('[StreamAudio] Play interrupted (AbortError) - ignoring');
+        // AbortError is normal when play is interrupted - ignore
         return;
       }
       console.error('[StreamAudio] Play failed:', err);

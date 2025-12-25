@@ -25,12 +25,12 @@ const getSupportedMimeType = (): string => {
   
   for (const type of types) {
     if (MediaRecorder.isTypeSupported(type)) {
-      console.log('[AudioRecorder] Using MIME type:', type);
+      
       return type;
     }
   }
   
-  console.log('[AudioRecorder] Fallback to audio/wav');
+  // Fallback to wav
   return 'audio/wav';
 };
 
@@ -62,7 +62,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   }, [audioUrl]);
 
   const startRecording = useCallback(async () => {
-    console.log('[AudioRecorder] Starting recording...');
+
     setError(null);
     setAudioBlob(null);
     
@@ -74,7 +74,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
 
     try {
       // Request microphone access
-      console.log('[AudioRecorder] Requesting microphone access...');
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -83,7 +83,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
         } 
       });
       
-      console.log('[AudioRecorder] Microphone access granted');
+
       streamRef.current = stream;
       setHasPermission(true);
 
@@ -102,7 +102,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
       recorderRef.current = recorder;
       recorder.startRecording();
       
-      console.log('[AudioRecorder] Recording started');
+
       setIsRecording(true);
       
       // Start timer
@@ -119,7 +119,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   }, [audioUrl]);
 
   const stopRecording = useCallback(() => {
-    console.log('[AudioRecorder] Stop recording called');
+
     
     // Clear timer first
     if (timerRef.current) {
@@ -138,29 +138,29 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
 
     // Check recorder state before stopping
     const state = recorder.getState?.() || recorder.state;
-    console.log('[AudioRecorder] Recorder state:', state);
+
     
     if (state === 'recording') {
       recorder.stopRecording(() => {
-        console.log('[AudioRecorder] Recording stopped callback');
+
         
         if (recorderRef.current) {
           const blob = recorderRef.current.getBlob();
-          console.log('[AudioRecorder] Got blob:', blob.size, 'bytes, type:', blob.type);
+
           
           setAudioBlob(blob);
           
           // Create URL for playback
           const url = URL.createObjectURL(blob);
           setAudioUrl(url);
-          console.log('[AudioRecorder] Created audio URL:', url);
+
         }
         
         // Stop stream tracks to release mic
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => {
             track.stop();
-            console.log('[AudioRecorder] Stopped track:', track.label);
+
           });
           streamRef.current = null;
         }
@@ -180,7 +180,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   }, []);
 
   const resetRecording = useCallback(() => {
-    console.log('[AudioRecorder] Resetting recording');
+
     
     // Revoke URL
     if (audioUrl) {

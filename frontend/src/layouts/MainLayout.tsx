@@ -11,8 +11,7 @@ import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useNFTMint } from '@/hooks/useNFTMint';
 import { useWebSocket } from '@/services/useWebSocket';
 import { uploadAudio } from '@/services/api';
-import { useAccount, useSwitchChain } from 'wagmi';
-import { MANTLE_SEPOLIA_CHAIN_ID } from '@/lib/contracts';
+import { useAccount } from 'wagmi';
 
 export const MainLayout: React.FC = () => {
     const navigate = useNavigate();
@@ -21,8 +20,8 @@ export const MainLayout: React.FC = () => {
     const { openConnectModal } = useConnectModal();
     const recorder = useAudioRecorder();
     const { isConnected: wsConnected } = useWebSocket();
-    const { address, isConnected: walletConnected, chainId } = useAccount();
-    const { switchChainAsync } = useSwitchChain();
+    const { address, isConnected: walletConnected, chain } = useAccount();
+    const chainId = chain?.id;
 
     // NFT Minting hook
     const nftMint = useNFTMint(address);
@@ -120,20 +119,25 @@ export const MainLayout: React.FC = () => {
         const isEcho = modal === 'ECHO' && currentSignal?.id;
 
         try {
-            // Step 1: Check and switch to Mantle Sepolia if needed
-            if (chainId !== MANTLE_SEPOLIA_CHAIN_ID) {
-                setMintingStatus('COMPRESSING'); // Use as "switching network" state
-                addToast('Switching to Mantle Sepolia...', 'INFO');
-                try {
-                    await switchChainAsync({ chainId: MANTLE_SEPOLIA_CHAIN_ID });
-                } catch (switchErr: any) {
-                    throw new Error('Please switch to Mantle Sepolia network');
-                }
+            // Step 1: Validate wallet is on a supported chain
+            const supportedChains = [5003, 421614]; // Mantle Sepolia, Arbitrum Sepolia
+            const chainNames: Record<number, string> = {
+                5003: 'Mantle Sepolia',
+                421614: 'Arbitrum Sepolia'
+            };
+
+            if (!chainId || !supportedChains.includes(chainId)) {
+                const currentChainName = chainId ? `Chain ${chainId}` : 'Unknown chain';
+                addToast(`Please switch to Mantle Sepolia or Arbitrum Sepolia. Currently on: ${currentChainName}`, 'ERROR');
+                return;
             }
+
+
+            addToast(`Broadcasting on ${chainNames[chainId]}...`, 'INFO');
 
             // Step 2: Upload audio to IPFS via backend
             setMintingStatus('IPFS_UPLOAD');
-            console.log(`[Mint] Uploading ${isEcho ? 'echo' : 'broadcast'} to IPFS...`);
+
 
             let uploadResponse;
             if (isEcho && currentSignal?.id) {
@@ -152,7 +156,7 @@ export const MainLayout: React.FC = () => {
             // For echoes, the backend handles blockchain registration
             if (isEcho) {
                 const echoData = uploadResponse.data;
-                console.log('[Echo] Upload complete:', echoData);
+
 
                 // Update the signal's echo count in the store
                 const { signals, setSignals, currentSignal } = useRadioStore.getState();
@@ -179,7 +183,7 @@ export const MainLayout: React.FC = () => {
 
             // Standard mint flow for non-echo broadcasts
             const { noteId, metadataUrl } = uploadResponse.data;
-            console.log('[Mint] IPFS upload complete:', { noteId, metadataUrl });
+
 
             // Step 3: Prompt user to sign transaction
             setMintingStatus('AWAITING_SIGNATURE');
@@ -221,7 +225,7 @@ export const MainLayout: React.FC = () => {
                     console.warn('[Mint] Confirm API failed:', confirmData.error);
                     // Don't fail the whole flow, NFT is already minted
                 }
-                console.log('[Mint] Note added to stream');
+
             } catch (confirmErr) {
                 console.warn('[Mint] Failed to confirm with backend:', confirmErr);
                 // NFT is already minted, stream add is non-critical

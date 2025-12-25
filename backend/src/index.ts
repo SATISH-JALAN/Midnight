@@ -16,8 +16,11 @@ import { wsManager } from './services/WebSocketManager.js';
 // Create Hono app
 const app = new Hono();
 
+import { rateLimiter } from './middleware/rateLimit.js';
+
 // Global middleware
 app.use('*', corsMiddleware);
+app.use('*', rateLimiter());
 app.onError(errorHandler);
 
 // Routes

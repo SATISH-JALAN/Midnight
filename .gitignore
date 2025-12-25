@@ -7,6 +7,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Environment Variables
+.env
+*.env
+backend/.env
+contracts/.env
+
+# Uploads (user audio files)
+backend/uploads/notes/*
+backend/uploads/temp/*
+!backend/uploads/notes/.gitkeep
+!backend/uploads/temp/.gitkeep
+
 node_modules
 dist
 dist-ssr

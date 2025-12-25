@@ -69,7 +69,7 @@ export const ExplorePage: React.FC = () => {
                     });
                 } else {
                     // No data from API - empty state will be shown
-                    console.log('[Explore] No signals from API');
+                    // No signals available
                 }
             } catch (err) {
                 console.error('Failed to fetch explore data:', err);

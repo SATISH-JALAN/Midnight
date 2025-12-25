@@ -76,7 +76,7 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
     if (!userAddress) return BigInt(0);
     try {
       const result = await refetchMintFee();
-      console.log('[useNFTMint] getMintFee result:', result, 'on chain:', chainId);
+
       
       if (result.data !== undefined && result.data !== null) {
         return result.data as bigint;
@@ -94,7 +94,7 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
     if (!userAddress) return 0;
     try {
       const result = await refetchFreeMints();
-      console.log('[useNFTMint] getFreeMints result:', result);
+
       return Number(result.data ?? 0);
     } catch (err) {
       console.error('[useNFTMint] Failed to get free mints:', err);
@@ -113,12 +113,12 @@ export function useNFTMint(userAddress: `0x${string}` | undefined): UseNFTMintRe
       return { txHash: '', success: false, error: 'Wallet not connected' };
     }
 
-    console.log('[useNFTMint] Starting mint...', { noteId, metadataUrl, userAddress, chainId, nftAddress });
+
 
     try {
       // Get mint fee
       const mintFee = await getMintFee();
-      console.log('[useNFTMint] Mint fee:', mintFee.toString());
+
 
       // Call mint function - uses current chain
       const hash = await writeContractAsync({

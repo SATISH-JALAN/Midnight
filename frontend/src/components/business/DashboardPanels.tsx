@@ -129,7 +129,8 @@ const SignalCard: React.FC<SignalCardProps> = ({ signal, isActive, isSignalPlayi
 
         setLoadingEchoes(true);
         try {
-            const res = await fetch(`http://localhost:3001/api/echo/${signal.id}`);
+            const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+            const res = await fetch(`${API_BASE}/api/echo/${signal.id}`);
             const data = await res.json();
             if (data.success && data.data?.echoes) {
                 setEchoes(data.data.echoes);
@@ -244,8 +245,8 @@ const SignalCard: React.FC<SignalCardProps> = ({ signal, isActive, isSignalPlayi
                                         <button
                                             onClick={() => toggleEchoPlay(echo)}
                                             className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${isPlaying
-                                                    ? 'bg-accent-purple text-black border-accent-purple'
-                                                    : 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple hover:bg-accent-purple hover:text-black'
+                                                ? 'bg-accent-purple text-black border-accent-purple'
+                                                : 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple hover:bg-accent-purple hover:text-black'
                                                 }`}
                                         >
                                             {isPlaying ? <Pause size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" />}

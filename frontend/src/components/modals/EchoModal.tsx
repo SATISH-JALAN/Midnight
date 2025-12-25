@@ -26,7 +26,7 @@ export const EchoModal: React.FC<EchoModalProps> = ({
 
     // Debug logging
     useEffect(() => {
-        console.log('[EchoModal] State:', { isRecording, recordingTime, hasRecording, audioUrl: audioUrl?.substring(0, 30) });
+        // Debug state removed for production
     }, [isRecording, recordingTime, hasRecording, audioUrl]);
 
     const togglePlayback = () => {

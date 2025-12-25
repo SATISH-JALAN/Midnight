@@ -22,6 +22,11 @@ echoRoutes.post('/:parentNoteId', async (c) => {
     const audioFile = formData.get('audio') as File | null;
     const walletAddress = formData.get('walletAddress') as string | null;
 
+    // Validate file size (max 10MB)
+    if (audioFile && audioFile.size > 10 * 1024 * 1024) {
+      return c.json({ success: false, error: 'File too large (max 10MB)' }, 400);
+    }
+
     // 2. Validate required fields
     if (!audioFile) {
       return c.json({ success: false, error: 'Audio file is required' }, 400);
@@ -92,6 +97,10 @@ echoRoutes.post('/:parentNoteId', async (c) => {
       echoNoteId: processResult.noteId,
       audioHash: ipfsResult.audioHash 
     }, 'Echo uploaded to IPFS');
+
+    // 6. Delete local file now that it's safely on IPFS
+    await audioProcessor.deleteAudio(processResult.noteId);
+    logger.info({ noteId: processResult.noteId }, 'Local file cleaned up');
 
     // 6. Register echo on blockchain (with metadataUrl for persistence)
     let txHash = '';
