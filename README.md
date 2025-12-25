@@ -7,7 +7,10 @@
 **Contract (Arbitrum):** [0xA3505e375C6d8CB1f0b3C934b30b93EF8f3211c5](https://sepolia.arbiscan.io/address/0xA3505e375C6d8CB1f0b3C934b30b93EF8f3211c5)
 
 <p align="center">
-  <img src="https://gateway.pinata.cloud/ipfs/QmZg8K3c9g8J7c6a9b8d7e6f5c4b3a2d1e0f9c8b7h" alt="Midnight Radio Logo" width="120" />
+  <img src="frontend/public/midnight1.jpeg" alt="Midnight Radio Logo" width="120" />
+  <br/>
+  <br/>
+  <span style="letter-spacing: 0.5em; font-size: 1.2em; color: #888;">EPHEMERA</span>
 </p>
 
 ---
