@@ -30,15 +30,19 @@ export const Header: React.FC<HeaderProps> = ({ listenerCount }) => {
 
   // Entrance Animation & Morse Code Easter Egg
   useEffect(() => {
+    if (!headerRef.current) return;
+
     const ctx = gsap.context(() => {
       // 1. Entrance
-      gsap.from(headerRef.current!.children, {
-        y: -30,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.1,
-        ease: "power3.out"
-      });
+      if (headerRef.current) {
+        gsap.from(headerRef.current.children, {
+          y: -30,
+          opacity: 0,
+          duration: 0.8,
+          stagger: 0.1,
+          ease: "power3.out"
+        });
+      }
 
       // 2. Morse Code: "MR" (Midnight Radio)
       // M: --  | R: .-.
@@ -249,16 +253,20 @@ export const ControlBar: React.FC<ControlBarProps> = ({ onDisconnect, activeTab,
 
   // Entrance Animation & Idle Jitter
   useEffect(() => {
+    if (!barRef.current) return;
+
     const ctx = gsap.context(() => {
       // Entrance
-      gsap.from(barRef.current!.children, {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.1,
-        ease: "power3.out",
-        delay: 0.2
-      });
+      if (barRef.current) {
+        gsap.from(barRef.current.children, {
+          y: 30,
+          opacity: 0,
+          duration: 0.8,
+          stagger: 0.1,
+          ease: "power3.out",
+          delay: 0.2
+        });
+      }
 
       // Idle Random Movement for EQ Bars
       eqRefs.current.forEach((bar) => {

@@ -516,10 +516,12 @@ export const StatsPanel: React.FC = () => {
     useEffect(() => {
         if (!statsRef.current) return;
         const ctx = gsap.context(() => {
-            gsap.fromTo(statsRef.current!.children,
-                { opacity: 0, x: 20 },
-                { opacity: 1, x: 0, duration: 0.6, stagger: 0.1, ease: "power2.out" }
-            );
+            if (statsRef.current) {
+                gsap.fromTo(statsRef.current.children,
+                    { opacity: 0, x: 20 },
+                    { opacity: 1, x: 0, duration: 0.6, stagger: 0.1, ease: "power2.out" }
+                );
+            }
         }, statsRef);
         return () => ctx.revert();
     }, []);

@@ -41,13 +41,16 @@ export const Modals: React.FC<ModalsProps> = ({
    // Entrance Animation
    useEffect(() => {
       if (type === 'NONE') return;
+      if (!overlayRef.current) return;
 
       const ctx = gsap.context(() => {
          // Overlay Fade
-         gsap.fromTo(overlayRef.current,
-            { opacity: 0 },
-            { opacity: 1, duration: 0.3 }
-         );
+         if (overlayRef.current) {
+            gsap.fromTo(overlayRef.current,
+               { opacity: 0 },
+               { opacity: 1, duration: 0.3 }
+            );
+         }
 
          // Content Pop
          if (contentRef.current) {

@@ -140,20 +140,30 @@ const NFTCard: React.FC<{ nft: VoiceNoteNFT, onClick: () => void }> = ({ nft, on
   const onHover = (enter: boolean) => {
     if (enter) {
       // 1. Scale Up
-      gsap.to(cardRef.current, { scale: 1.02, duration: 0.3, ease: "back.out(1.5)" });
+      if (cardRef.current) {
+        gsap.to(cardRef.current, { scale: 1.02, duration: 0.3, ease: "back.out(1.5)" });
+      }
 
       // 2. Border Surge
-      gsap.to(borderRef.current, { opacity: 1, duration: 0.1 });
+      if (borderRef.current) {
+        gsap.to(borderRef.current, { opacity: 1, duration: 0.1 });
+      }
 
       // 3. Content 'Unfocus' Momentarily (Chromatic Aberration sim)
-      gsap.fromTo(contentRef.current,
-        { filter: "brightness(1.5) contrast(1.2)" },
-        { filter: "brightness(1) contrast(1)", duration: 0.5 }
-      );
+      if (contentRef.current) {
+        gsap.fromTo(contentRef.current,
+          { filter: "brightness(1.5) contrast(1.2)" },
+          { filter: "brightness(1) contrast(1)", duration: 0.5 }
+        );
+      }
 
     } else {
-      gsap.to(cardRef.current, { scale: 1, duration: 0.3 });
-      gsap.to(borderRef.current, { opacity: 0, duration: 0.3 });
+      if (cardRef.current) {
+        gsap.to(cardRef.current, { scale: 1, duration: 0.3 });
+      }
+      if (borderRef.current) {
+        gsap.to(borderRef.current, { opacity: 0, duration: 0.3 });
+      }
     }
   };
 

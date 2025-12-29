@@ -143,16 +143,18 @@ export const ExplorePage: React.FC = () => {
                         </div>
                         <div>
                             <h3 className="font-display font-bold text-xl text-white">LIVE ACTIVITY</h3>
-                            <p className="font-mono text-xs text-ui-dim">Network traffic is increasing in Sector 9F.</p>
+                            <p className="font-mono text-xs text-ui-dim">
+                                {useRadioStore.getState().listenerCount > 0
+                                    ? `${useRadioStore.getState().listenerCount} listeners tuned in right now.`
+                                    : 'Waiting for listeners to connect...'}
+                            </p>
                         </div>
                     </div>
-                    <div className="flex -space-x-2">
-                        {[1, 2, 3, 4, 5].map(i => (
-                            <div key={i} className="w-8 h-8 rounded-full bg-gray-800 border-2 border-space-black" />
-                        ))}
-                        <div className="w-8 h-8 rounded-full bg-ui-dim text-space-black flex items-center justify-center font-bold text-xs ring-2 ring-space-black z-10">
-                            +42
+                    <div className="flex items-center gap-2">
+                        <div className="font-mono text-2xl text-accent-phosphor font-bold">
+                            {useRadioStore.getState().listenerCount}
                         </div>
+                        <span className="font-mono text-xs text-ui-dim uppercase">Active</span>
                     </div>
                 </div>
             </section>

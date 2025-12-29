@@ -207,14 +207,18 @@ const DecodedText: React.FC<{ text: string, className?: string }> = ({ text, cla
 const CornerDecor = () => {
   const decorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    if (!decorRef.current) return;
+
     const ctx = gsap.context(() => {
-      gsap.from(decorRef.current!.children, {
-        scale: 0,
-        duration: 0.6,
-        stagger: 0.1,
-        ease: "back.out(1.7)",
-        delay: 0.5
-      });
+      if (decorRef.current) {
+        gsap.from(decorRef.current.children, {
+          scale: 0,
+          duration: 0.6,
+          stagger: 0.1,
+          ease: "back.out(1.7)",
+          delay: 0.5
+        });
+      }
     }, decorRef);
     return () => ctx.revert();
   }, []);
@@ -353,6 +357,7 @@ const ActiveState: React.FC<{
   }, [isPlaying, isTuning, signal.id]);
 
   const handlePlayHover = (enter: boolean) => {
+    if (!playBtnRef.current) return;
     gsap.to(playBtnRef.current, {
       scale: enter ? 1.1 : 1,
       boxShadow: enter ? `0 0 40px var(--color-accent-${moodColor})` : 'none',
@@ -509,6 +514,7 @@ const ActiveState: React.FC<{
 const ActionBtn = ({ icon: Icon, label, onClick, color }: any) => {
   const btnRef = useRef<HTMLButtonElement>(null);
   const handleHover = (enter: boolean) => {
+    if (!btnRef.current) return;
     gsap.to(btnRef.current, { y: enter ? -5 : 0, duration: 0.2 });
   }
 
