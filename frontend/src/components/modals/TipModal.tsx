@@ -3,7 +3,7 @@ import { X, Zap, Check, AlertTriangle } from 'lucide-react';
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { parseEther } from 'viem';
 import { TIPPING_POOL_ABI, getTippingPoolAddress } from '@/lib/contracts';
-import { getChainConfig } from '@/lib/chains';
+import { getChainConfig, getExplorerTxUrl } from '@/lib/chains';
 
 interface TipModalProps {
     onClose: () => void;
@@ -142,7 +142,7 @@ export const TipModal: React.FC<TipModalProps> = ({ onClose, tokenId = 0, broadc
                     <p className="font-mono text-xs text-ui-dim">Tip sent! 60% to broadcaster, 40% to platform</p>
                     {hash && (
                         <a
-                            href={`https://sepolia.mantlescan.xyz/tx/${hash}`}
+                            href={getExplorerTxUrl(chainId, hash)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-2 font-mono text-[10px] text-accent-cyan hover:underline"

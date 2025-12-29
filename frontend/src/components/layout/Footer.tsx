@@ -192,7 +192,7 @@ export const Footer: React.FC = () => {
     ];
 
     return (
-        <footer className="relative z-50 bg-space-panel/80 backdrop-blur-xl border-t border-ui-border h-16 md:h-24 px-4 md:px-6 flex items-center justify-between shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.5)]">
+        <footer className="relative z-50 bg-space-panel/80 backdrop-blur-xl border-t border-ui-border h-16 md:h-24 px-4 md:px-6 flex items-center justify-between shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.5)] shrink-0">
 
             {/* Ambient Mixer (Left) - Hidden on Mobile */}
             <div className="hidden md:flex items-center gap-8">

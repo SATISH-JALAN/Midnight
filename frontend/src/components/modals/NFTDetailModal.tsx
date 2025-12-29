@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { X, ExternalLink, Play, Pause, Clock, Tag, Volume2 } from 'lucide-react';
 import { VoiceNoteNFT } from '@/types';
-import { VOICE_NOTE_NFT_ADDRESS } from '@/lib/contracts';
+import { getVoiceNoteNFTAddress } from '@/lib/contracts';
+import { useChainId } from 'wagmi';
+import { getChainConfig } from '@/lib/chains';
 
 interface NFTDetailModalProps {
     onClose: () => void;
@@ -35,12 +37,14 @@ export const NFTDetailModal: React.FC<NFTDetailModalProps> = ({ onClose, nft }) 
     // Get audio URL from metadata or extended properties
     const audioUrl = extendedNft.audioUrl || (nft.metadata as any)?.audioUrl;
 
-    // Build Mantle Explorer URL
-    // If we have a numeric tokenId, link to the NFT. Otherwise link to the contract.
+    // Chain-aware explorer URL
+    const chainId = useChainId();
+    const chainConfig = useMemo(() => getChainConfig(chainId), [chainId]);
+    const nftAddress = useMemo(() => getVoiceNoteNFTAddress(chainId), [chainId]);
     const tokenIdNum = parseInt(nft.tokenId);
     const explorerUrl = !isNaN(tokenIdNum) && tokenIdNum > 0
-        ? `https://sepolia.mantlescan.xyz/token/${VOICE_NOTE_NFT_ADDRESS}?a=${tokenIdNum}`
-        : `https://sepolia.mantlescan.xyz/address/${VOICE_NOTE_NFT_ADDRESS}`;
+        ? `${chainConfig.explorer}/token/${nftAddress}?a=${tokenIdNum}`
+        : `${chainConfig.explorer}/address/${nftAddress}`;
 
     // Audio playback handlers
     const togglePlayback = async () => {

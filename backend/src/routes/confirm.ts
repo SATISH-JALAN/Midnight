@@ -13,7 +13,7 @@ export const confirmRoutes = new Hono();
  * 
  * This ensures notes only appear in the stream after successful on-chain minting.
  */
-confirmRoutes.post('/', async (c) => {
+confirmRoutes.post('/confirm', async (c) => {
   try {
     const body = await c.req.json();
     const { 

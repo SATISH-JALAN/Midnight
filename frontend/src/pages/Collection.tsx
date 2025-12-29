@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useRadioStore } from '@/store/useRadioStore';
 import { Gallery } from '@/components/business/Gallery';
 import { VoiceNoteNFT } from '@/types';
@@ -6,6 +6,7 @@ import { fetchCollection, CollectionNFT } from '@/services/api';
 import { useAccount, useChainId } from 'wagmi';
 import { WalletGate } from '@/components/WalletGate';
 import { Zap, Radio, ExternalLink } from 'lucide-react';
+import { getExplorerTxUrl } from '@/lib/chains';
 
 interface Tip {
     tokenId: string;
@@ -223,7 +224,7 @@ export const CollectionPage: React.FC = () => {
                                             </span>
                                         </div>
                                         <a
-                                            href={`https://sepolia.mantlescan.xyz/tx/${tip.txHash}`}
+                                            href={getExplorerTxUrl(chainId, tip.txHash)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="flex items-center gap-1 text-[10px] text-accent-cyan hover:underline"
