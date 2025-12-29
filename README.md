@@ -1,6 +1,6 @@
 <br/>
 <p align="center">
-  <img src="frontend/public/midnight1.jpeg" alt="Midnight Radio Logo" width="400" />
+  <img src="frontend/public/midnight2.jpeg" alt="Midnight Radio Logo" width="400" />
 </p>
 
 <p align="center">

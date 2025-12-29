@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Wallet, Radio, Activity, Settings, Power, Volume2, Signal, Wifi } from 'lucide-react';
+import { Wallet, Disc3, Activity, Settings, Power, Volume2, Signal, Wifi } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { gsap } from 'gsap';
 import { ChainSwitcher } from '@/components/ui/ChainSwitcher';
@@ -110,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({ listenerCount }) => {
         }}
       >
         <div className="w-8 h-8 md:w-10 md:h-10 rounded border border-ui-border bg-space-panel flex items-center justify-center group-hover:border-accent-phosphor/50 transition-colors relative overflow-hidden shrink-0">
-          <Radio ref={morseRef} className="text-accent-phosphor relative z-10" size={16} />
+          <Disc3 ref={morseRef} className="text-accent-phosphor relative z-10 animate-spin-slow" size={18} />
           <div className="absolute inset-0 bg-accent-phosphor/10 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
         </div>
         <div>
