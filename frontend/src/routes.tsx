@@ -15,6 +15,7 @@ const StreamPage = React.lazy(() => import('@/pages/Stream').then(module => ({ d
 const BroadcastPage = React.lazy(() => import('@/pages/Broadcast').then(module => ({ default: module.BroadcastPage })));
 const CollectionPage = React.lazy(() => import('@/pages/Collection').then(module => ({ default: module.CollectionPage })));
 const ExplorePage = React.lazy(() => import('@/pages/Explore').then(module => ({ default: module.ExplorePage })));
+const GuidePage = React.lazy(() => import('@/pages/Guide').then(module => ({ default: module.GuidePage })));
 
 const LoadingFallback = () => (
     <div className="flex items-center justify-center h-full w-full bg-space-black">
@@ -42,6 +43,10 @@ export const router = createBrowserRouter([
             {
                 path: 'collection',
                 element: <React.Suspense fallback={<LoadingFallback />}><CollectionPage /></React.Suspense>,
+            },
+            {
+                path: 'guide',
+                element: <React.Suspense fallback={<LoadingFallback />}><GuidePage /></React.Suspense>,
             },
             {
                 path: 'settings', // Added missing route

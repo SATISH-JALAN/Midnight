@@ -1,13 +1,25 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { useRadioStore } from '@/store/useRadioStore';
-import { CloudRain, Volume2, Zap, Radio, Disc, Activity, Mic } from 'lucide-react';
+import { CloudRain, Volume2, Zap, Radio, Disc, Activity, Mic, BookOpen } from 'lucide-react';
 import { SecretHinter } from '@/components/ui/SecretHinter';
 import { cn } from '@/lib/utils';
 import { ViewType } from '@/types';
 
 export const Footer: React.FC = () => {
+    const navigate = useNavigate();
     const { activeView, setActiveView, ambient, setAmbient } = useRadioStore();
+
+    // Route mapping for navigation
+    const routeMap: Record<ViewType, string> = {
+        'LIVE': '/',
+        'BROADCAST': '/broadcast',
+        'MY': '/collection',
+        'EXPLORE': '/explore',
+        'GUIDE': '/guide',
+        'SETTINGS': '/settings'
+    };
 
 
     // Konami Code Easter Egg
@@ -189,6 +201,7 @@ export const Footer: React.FC = () => {
         { id: 'BROADCAST', label: 'Transmit', icon: <Mic className="w-4 h-4" /> },
         { id: 'MY', label: 'Collection', icon: <Disc className="w-4 h-4" /> },
         { id: 'EXPLORE', label: 'Explore', icon: <Radio className="w-4 h-4" onClick={(e) => handleAlienEgg(e)} /> },
+        { id: 'GUIDE', label: 'Guide', icon: <BookOpen className="w-4 h-4" /> },
     ];
 
     return (
@@ -215,6 +228,7 @@ export const Footer: React.FC = () => {
                                 handleAlienEgg(e);
                             }
                             setActiveView(item.id);
+                            navigate(routeMap[item.id]);
                         }}
                         className={cn(
                             "flex items-center justify-center gap-2 p-3 md:px-5 md:py-2.5 rounded-full font-display text-xs font-bold tracking-wide transition-all duration-300 relative overflow-hidden group min-w-[44px] min-h-[44px]",

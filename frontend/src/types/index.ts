@@ -67,7 +67,7 @@ export interface WalletState {
 export type ModalType = 'NONE' | 'RECORD' | 'WALLET' | 'TIP' | 'ECHO' | 'NFT_DETAIL' | 'BROADCAST_SUCCESS';
 export type MintingStatus = 'IDLE' | 'RECORDING' | 'ANALYZING' | 'COMPRESSING' | 'IPFS_UPLOAD' | 'AWAITING_SIGNATURE' | 'UPLOADING' | 'MINTING' | 'SUCCESS' | 'ERROR';
 
-export type ViewType = 'LIVE' | 'MY' | 'EXPLORE' | 'BROADCAST' | 'SETTINGS';
+export type ViewType = 'LIVE' | 'MY' | 'EXPLORE' | 'BROADCAST' | 'GUIDE' | 'SETTINGS';
 
 export interface Toast {
   id: string;
