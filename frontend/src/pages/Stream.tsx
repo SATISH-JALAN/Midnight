@@ -32,10 +32,16 @@ export const StreamPage: React.FC = () => {
 
     // Fetch real stream data from backend - filtered by current chain
     useEffect(() => {
+        // Clear old signals when chain changes to prevent mixing chains
+        setSignals([]);
+        setCurrentSignal(null);
+
         const loadStream = async () => {
             try {
                 setIsLoading(true);
+                console.log('[Stream] Fetching for chainId:', chainId);
                 const response = await fetchStream(chainId);
+                console.log('[Stream] Response:', response.data?.notes?.length, 'notes for chain', response.data?.chainId);
 
                 if (response.success && response.data) {
                     // Convert backend notes to frontend Signal format
@@ -61,7 +67,7 @@ export const StreamPage: React.FC = () => {
                     setSignals(convertedSignals);
 
                     // Set first signal as current if none selected
-                    if (convertedSignals.length > 0 && !currentSignal) {
+                    if (convertedSignals.length > 0) {
                         setCurrentSignal(convertedSignals[0]);
                     }
 

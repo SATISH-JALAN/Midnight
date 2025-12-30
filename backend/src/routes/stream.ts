@@ -20,14 +20,19 @@ streamRoutes.get('/', async (c) => {
     // Get chainId from query params
     const chainIdParam = c.req.query('chainId');
     const chainId = chainIdParam ? parseInt(chainIdParam, 10) : undefined;
+    
+    logger.info({ chainIdParam, chainId }, 'Stream request received');
 
     // Get notes from in-memory queue (recent uploads, not yet on chain)
     let queueNotes = queueManager.getActiveQueue().filter(note => !note.isEcho);
+    const queueNotesBeforeFilter = queueNotes.length;
     
     // Filter by chainId if provided
     if (chainId) {
       queueNotes = queueNotes.filter(note => note.chainId === chainId);
     }
+    
+    logger.info({ queueNotesBeforeFilter, queueNotesAfterFilter: queueNotes.length, chainId }, 'Queue notes filtered');
     
     const queueNoteIds = new Set(queueNotes.map(n => n.noteId));
 
