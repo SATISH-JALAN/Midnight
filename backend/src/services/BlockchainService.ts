@@ -413,6 +413,18 @@ export class BlockchainService {
 
       const rawAudioUrl = metadata?.audioUrl || metadata?.animation_url;
       const audioUrl = toGatewayUrl(rawAudioUrl);
+      
+      // Parse duration from multiple possible paths
+      const duration = metadata?.duration 
+        || metadata?.properties?.duration 
+        || (metadata?.attributes?.find((a: any) => a.trait_type === 'Duration')?.value?.replace('s', '') || 0);
+      
+      logger.debug({ 
+        tokenId: tokenId.toString(), 
+        hasMetadata: !!metadata, 
+        duration,
+        audioUrl 
+      }, 'NFT data parsed');
 
       return {
         tokenId: tokenId.toString(),
@@ -423,7 +435,7 @@ export class BlockchainService {
         tips,
         echoes: 0,
         audioUrl,
-        duration: metadata?.duration || metadata?.properties?.duration,
+        duration: typeof duration === 'string' ? parseInt(duration, 10) : (duration || 0),
         moodColor: metadata?.moodColor || metadata?.properties?.moodColor,
         sector: metadata?.attributes?.find((a: any) => a.trait_type === 'Sector')?.value,
         waveform: metadata?.waveform || metadata?.properties?.waveform,
