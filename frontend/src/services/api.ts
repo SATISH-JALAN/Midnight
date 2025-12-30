@@ -25,6 +25,7 @@ export interface StreamResponse {
     totalListeners: number;
     activeNotes: number;
     serverTime: number;
+    chainId: number | null;
   };
   error?: string;
 }

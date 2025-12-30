@@ -402,6 +402,15 @@ export class BlockchainService {
         logger.warn({ tokenId: tokenId.toString() }, 'Failed to fetch metadata from IPFS');
       }
 
+      // Get echo count from echo contract
+      let echoes = 0;
+      try {
+        const noteId = noteData?.noteId || metadata?.noteId || `note_${tokenId}`;
+        echoes = await this.getEchoCount(noteId, chainId);
+      } catch {
+        // Echo count might not exist
+      }
+
       // Helper to convert IPFS URLs to HTTP gateway
       const toGatewayUrl = (url: string | undefined): string | undefined => {
         if (!url) return undefined;
@@ -433,7 +442,7 @@ export class BlockchainService {
         tokenURI,
         metadata,
         tips,
-        echoes: 0,
+        echoes,
         audioUrl,
         duration: typeof duration === 'string' ? parseInt(duration, 10) : (duration || 0),
         moodColor: metadata?.moodColor || metadata?.properties?.moodColor,

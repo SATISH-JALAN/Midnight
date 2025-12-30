@@ -102,20 +102,17 @@ echoRoutes.post('/:parentNoteId', async (c) => {
     await audioProcessor.deleteAudio(processResult.noteId);
     logger.info({ noteId: processResult.noteId }, 'Local file cleaned up');
 
-    // 6. Register echo on blockchain (with metadataUrl for persistence)
-    let txHash = '';
-    try {
-      const result = await blockchainService.registerEcho(
-        parentNoteId,
-        processResult.noteId,
-        ipfsResult.metadataUrl, // Store IPFS URL for retrieval
-        parentBroadcaster!,
-        walletAddress
-      );
-      txHash = result.txHash;
-    } catch (err) {
-      logger.warn({ err }, 'Blockchain echo registration failed, continuing without');
-    }
+    // 6. Register echo on blockchain (REQUIRED - no echo without on-chain proof)
+    const result = await blockchainService.registerEcho(
+      parentNoteId,
+      processResult.noteId,
+      ipfsResult.metadataUrl, // Store IPFS URL for retrieval
+      parentBroadcaster!,
+      walletAddress
+    );
+    const txHash = result.txHash;
+    
+    logger.info({ txHash, parentNoteId, echoNoteId: processResult.noteId }, 'Echo registered on blockchain');
 
     // 7. Create echo note object
     const echoNote: Note = {
