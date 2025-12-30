@@ -441,6 +441,7 @@ export class BlockchainService {
   /**
    * Get all NFTs from blockchain (for explore/stream page)
    * Used for persistence across server restarts
+   * Uses chunked queries to work within RPC provider limits
    */
   async getAllNFTs(limit: number = 50, chainId?: number): Promise<NFTData[]> {
     const { provider, readOnlyNftContract } = this.getChain(chainId);
@@ -452,22 +453,43 @@ export class BlockchainService {
       const filter = readOnlyNftContract.filters.VoiceNoteMinted();
       
       const currentBlock = await provider.getBlockNumber();
-      // Use current block to include latest notes (was currentBlock - 10)
+      
+      // Total range we want to cover (~24 hours on L2)
+      const totalBlocksToQuery = 50000;
+      // Chunk size that works with all RPC providers (Arbitrum: 10k, Mantle: 30k)
+      const chunkSize = 9000;
+      
       const toBlock = currentBlock;
-      // Increased from 9000 to 50000 blocks to cover ~24+ hours on L2 chains
-      const fromBlock = Math.max(0, currentBlock - 50000);
+      const fromBlock = Math.max(0, currentBlock - totalBlocksToQuery);
       
-      logger.info({ fromBlock, toBlock, blocksQueried: toBlock - fromBlock }, 'Querying block range');
+      logger.info({ fromBlock, toBlock, totalBlocksToQuery, chunkSize }, 'Querying block range in chunks');
       
-      const events = await readOnlyNftContract.queryFilter(filter, fromBlock, toBlock);
+      // Query in chunks and merge results
+      const allEvents: any[] = [];
+      let currentFrom = fromBlock;
+      
+      while (currentFrom < toBlock) {
+        const currentTo = Math.min(currentFrom + chunkSize, toBlock);
+        
+        try {
+          const chunkEvents = await readOnlyNftContract.queryFilter(filter, currentFrom, currentTo);
+          allEvents.push(...chunkEvents);
+          logger.debug({ from: currentFrom, to: currentTo, found: chunkEvents.length }, 'Chunk query complete');
+        } catch (chunkErr) {
+          logger.warn({ from: currentFrom, to: currentTo, err: chunkErr }, 'Chunk query failed, skipping');
+        }
+        
+        currentFrom = currentTo + 1;
+      }
 
-      logger.info({ eventCount: events.length }, 'Found total VoiceNoteMinted events');
+      logger.info({ eventCount: allEvents.length }, 'Found total VoiceNoteMinted events');
 
       const nfts: NFTData[] = [];
       const processedTokenIds = new Set<string>();
       const now = new Date();
       
-      const recentEvents = events.slice(-limit).reverse();
+      // Take most recent events up to limit
+      const recentEvents = allEvents.slice(-limit).reverse();
 
       for (const event of recentEvents) {
         try {
