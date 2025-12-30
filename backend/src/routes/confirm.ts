@@ -60,6 +60,7 @@ confirmRoutes.post('/confirm', async (c) => {
       sector: sector || `Sector-${Math.floor(Math.random() * 9) + 1}`,
       tips: 0,
       echoes: 0,
+      chainId: chainId || undefined, // Store the chain where this note was minted
     };
 
     // NOW add to queue (after mint confirmed)

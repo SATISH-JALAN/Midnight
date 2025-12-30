@@ -9,17 +9,31 @@ export const streamRoutes = new Hono();
 
 /**
  * GET /api/stream
- * Returns the list of active voice notes
+ * Returns the list of active voice notes for a specific chain
  * Merges in-memory queue with blockchain NFTs for persistence
+ * 
+ * Query params:
+ *   - chainId: Filter by chain ID (required for chain-specific results)
  */
 streamRoutes.get('/', async (c) => {
   try {
+    // Get chainId from query params
+    const chainIdParam = c.req.query('chainId');
+    const chainId = chainIdParam ? parseInt(chainIdParam, 10) : undefined;
+
     // Get notes from in-memory queue (recent uploads, not yet on chain)
-    const queueNotes = queueManager.getActiveQueue().filter(note => !note.isEcho);
+    let queueNotes = queueManager.getActiveQueue().filter(note => !note.isEcho);
+    
+    // Filter by chainId if provided
+    if (chainId) {
+      queueNotes = queueNotes.filter(note => note.chainId === chainId);
+    }
+    
     const queueNoteIds = new Set(queueNotes.map(n => n.noteId));
 
     // Also fetch NFTs from blockchain for persistence across restarts
-    const blockchainNfts = await blockchainService.getAllNFTs(20);
+    // Pass chainId to get chain-specific NFTs
+    const blockchainNfts = await blockchainService.getAllNFTs(20, chainId);
     
     // Convert blockchain NFTs to Note format (no per-note blockchain calls for speed)
     const blockchainNotes: Note[] = blockchainNfts
@@ -38,6 +52,7 @@ streamRoutes.get('/', async (c) => {
         sector: nft.sector || 'Unknown Sector',
         tips: nft.tips || 0,
         echoes: nft.echoes || 0,
+        chainId: nft.chainId || chainId, // Preserve chain info
       }));
 
     // Merge: in-memory first (freshest), then blockchain
@@ -50,12 +65,20 @@ streamRoutes.get('/', async (c) => {
         totalListeners: wsManager.getClientCount(),
         activeNotes: allNotes.length,
         serverTime: Date.now(),
+        chainId: chainId || null, // Echo back which chain was queried
       },
     });
   } catch (err) {
     logger.error({ err }, 'Failed to fetch stream');
     // Fallback to queue only
-    const notes = queueManager.getActiveQueue().filter(note => !note.isEcho);
+    const chainIdParam = c.req.query('chainId');
+    const chainId = chainIdParam ? parseInt(chainIdParam, 10) : undefined;
+    
+    let notes = queueManager.getActiveQueue().filter(note => !note.isEcho);
+    if (chainId) {
+      notes = notes.filter(note => note.chainId === chainId);
+    }
+    
     return c.json({
       success: true,
       data: {
@@ -63,6 +86,7 @@ streamRoutes.get('/', async (c) => {
         totalListeners: wsManager.getClientCount(),
         activeNotes: notes.length,
         serverTime: Date.now(),
+        chainId: chainId || null,
       },
     });
   }

@@ -15,6 +15,7 @@ export interface Note {
   sector: string;
   tips: number;
   echoes: number;
+  chainId?: number; // Chain ID where this note was minted
   // Echo-specific fields
   isEcho?: boolean;
   parentNoteId?: string;

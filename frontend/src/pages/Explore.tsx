@@ -4,6 +4,7 @@ import { Signal, LeaderboardEntry } from '@/types';
 import { Play, TrendingUp, Trophy, Zap, Share2, Activity, Star } from 'lucide-react';
 import { gsap } from 'gsap';
 import { fetchStream } from '@/services/api';
+import { useChainId } from 'wagmi';
 
 export const ExplorePage: React.FC = () => {
     const {
@@ -14,13 +15,14 @@ export const ExplorePage: React.FC = () => {
     } = useRadioStore();
 
     const [isLoading, setIsLoading] = useState(true);
+    const chainId = useChainId();
 
-    // Fetch real data from backend
+    // Fetch real data from backend - filtered by current chain
     useEffect(() => {
         const loadExploreData = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetchStream();
+                const response = await fetchStream(chainId);
 
                 if (response.success && response.data?.notes) {
                     // Convert backend notes to Signal format
@@ -80,7 +82,7 @@ export const ExplorePage: React.FC = () => {
         };
 
         loadExploreData();
-    }, []);
+    }, [chainId]); // Refetch when chain changes
 
     const handlePlay = (signal: Signal) => {
         setCurrentSignal(signal);

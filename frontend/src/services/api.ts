@@ -65,10 +65,13 @@ export async function uploadAudio(
 }
 
 /**
- * Fetch active stream/notes
+ * Fetch active stream/notes for a specific chain
  */
-export async function fetchStream(): Promise<StreamResponse> {
-  const response = await fetch(`${API_BASE}/api/stream`);
+export async function fetchStream(chainId?: number): Promise<StreamResponse> {
+  const url = chainId 
+    ? `${API_BASE}/api/stream?chainId=${chainId}` 
+    : `${API_BASE}/api/stream`;
+  const response = await fetch(url);
   return response.json();
 }
 

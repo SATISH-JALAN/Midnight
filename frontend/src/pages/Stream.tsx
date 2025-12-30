@@ -4,7 +4,7 @@ import { TelescopeInterface } from '@/components/business/TelescopeInterface';
 import { SignalQueue, StatsPanel } from '@/components/business/DashboardPanels';
 import { Signal } from '@/types';
 import { fetchStream } from '@/services/api';
-import { useAccount } from 'wagmi';
+import { useAccount, useChainId } from 'wagmi';
 import { WalletGate } from '@/components/WalletGate';
 import { useStreamAudio } from '@/hooks/useStreamAudio';
 import { Activity } from 'lucide-react';
@@ -24,15 +24,18 @@ export const StreamPage: React.FC = () => {
     const [showMobileStats, setShowMobileStats] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Get current chain for filtering
+    const chainId = useChainId();
+
     // Enable audio playback for current signal
     useStreamAudio();
 
-    // Fetch real stream data from backend
+    // Fetch real stream data from backend - filtered by current chain
     useEffect(() => {
         const loadStream = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetchStream();
+                const response = await fetchStream(chainId);
 
                 if (response.success && response.data) {
                     // Convert backend notes to frontend Signal format
@@ -85,7 +88,7 @@ export const StreamPage: React.FC = () => {
         // Refresh every 30 seconds
         const interval = setInterval(loadStream, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [chainId]); // Refetch when chain changes
 
     return (
         <>
