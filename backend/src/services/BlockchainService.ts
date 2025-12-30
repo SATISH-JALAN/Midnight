@@ -440,6 +440,7 @@ export class BlockchainService {
 
   /**
    * Get all NFTs from blockchain (for explore/stream page)
+   * Used for persistence across server restarts
    */
   async getAllNFTs(limit: number = 50, chainId?: number): Promise<NFTData[]> {
     const { provider, readOnlyNftContract } = this.getChain(chainId);
@@ -451,14 +452,20 @@ export class BlockchainService {
       const filter = readOnlyNftContract.filters.VoiceNoteMinted();
       
       const currentBlock = await provider.getBlockNumber();
-      const toBlock = currentBlock - 10;
-      const fromBlock = Math.max(0, toBlock - 9000);
+      // Use current block to include latest notes (was currentBlock - 10)
+      const toBlock = currentBlock;
+      // Increased from 9000 to 50000 blocks to cover ~24+ hours on L2 chains
+      const fromBlock = Math.max(0, currentBlock - 50000);
+      
+      logger.info({ fromBlock, toBlock, blocksQueried: toBlock - fromBlock }, 'Querying block range');
+      
       const events = await readOnlyNftContract.queryFilter(filter, fromBlock, toBlock);
 
       logger.info({ eventCount: events.length }, 'Found total VoiceNoteMinted events');
 
       const nfts: NFTData[] = [];
       const processedTokenIds = new Set<string>();
+      const now = new Date();
       
       const recentEvents = events.slice(-limit).reverse();
 
@@ -472,6 +479,11 @@ export class BlockchainService {
 
           const nft = await this.getNFTData(tokenId, chainId);
           if (nft) {
+            // Filter out expired notes (older than 24 hours)
+            if (nft.expiresAt && new Date(nft.expiresAt) < now) {
+              logger.debug({ tokenId: tokenIdStr, expiresAt: nft.expiresAt }, 'Skipping expired note');
+              continue;
+            }
             nfts.push(nft);
           }
         } catch (err) {
@@ -479,7 +491,7 @@ export class BlockchainService {
         }
       }
 
-      logger.info({ nftCount: nfts.length, chainId: resolvedChainId }, 'All NFTs fetched from blockchain');
+      logger.info({ nftCount: nfts.length, chainId: resolvedChainId }, 'All NFTs fetched from blockchain (non-expired)');
       return nfts;
     } catch (err) {
       logger.error({ err }, 'Failed to get all NFTs from blockchain');
