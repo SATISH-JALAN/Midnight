@@ -215,6 +215,238 @@ export const GuidePage: React.FC = () => {
                             ]} />
                         </GuideSection>
 
+                        {/* How It Works - Technical Flow */}
+                        <GuideSection
+                            icon={<Zap size={22} />}
+                            title="How It Works (Technical Flow)"
+                            color="phosphor"
+                            index={7}
+                        >
+                            <p className="text-ui-dim font-mono text-sm mb-5 leading-relaxed border-l-2 border-accent-phosphor/30 pl-4">
+                                Understand the complete technical flow from recording to NFT minting.
+                            </p>
+                            <div className="space-y-4 mb-6">
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-cyan mb-3 uppercase tracking-wider">1. Recording & Processing</h4>
+                                    <p className="font-mono text-xs text-ui-dim leading-relaxed">
+                                        Your audio is captured using the Web Audio API at 48kHz sample rate. The recording is processed
+                                        on our backend using FFmpeg to normalize volume, remove silence, and compress to optimized MP3 format.
+                                        Waveform data is extracted for visualization.
+                                    </p>
+                                </div>
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-purple mb-3 uppercase tracking-wider">2. IPFS Upload</h4>
+                                    <p className="font-mono text-xs text-ui-dim leading-relaxed">
+                                        The processed audio file is uploaded to IPFS via Pinata's pinning service. A unique CID (Content Identifier)
+                                        is generated. NFT metadata following the OpenSea standard is created and also pinned to IPFS, containing
+                                        the audio URL, duration, mood, and waveform data.
+                                    </p>
+                                </div>
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-orange mb-3 uppercase tracking-wider">3. Blockchain Minting</h4>
+                                    <p className="font-mono text-xs text-ui-dim leading-relaxed">
+                                        The VoiceNoteNFT smart contract is called with the IPFS metadata URL. An ERC-721 token is minted
+                                        to your wallet. The token stores the noteId, broadcaster address, creation time, and expiration time
+                                        (24 hours from mint). A VoiceNoteMinted event is emitted for indexing.
+                                    </p>
+                                </div>
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-red mb-3 uppercase tracking-wider">4. Broadcasting</h4>
+                                    <p className="font-mono text-xs text-ui-dim leading-relaxed">
+                                        Once confirmed on-chain, your transmission is added to the live stream queue. A WebSocket event
+                                        notifies all connected listeners. The audio is served directly from IPFS gateways, ensuring
+                                        decentralized and censorship-resistant delivery.
+                                    </p>
+                                </div>
+                            </div>
+                        </GuideSection>
+
+                        {/* Tech Stack */}
+                        <GuideSection
+                            icon={<BookOpen size={22} />}
+                            title="Technology Stack"
+                            color="cyan"
+                            index={8}
+                        >
+                            <p className="text-ui-dim font-mono text-sm mb-5 leading-relaxed border-l-2 border-accent-cyan/30 pl-4">
+                                The complete technology stack powering Midnight Radio.
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-cyan mb-3 uppercase tracking-wider">Frontend</h4>
+                                    <ul className="font-mono text-xs text-ui-dim space-y-1.5">
+                                        <li>• React 18 with TypeScript</li>
+                                        <li>• Vite for fast development</li>
+                                        <li>• TailwindCSS for styling</li>
+                                        <li>• GSAP for animations</li>
+                                        <li>• Zustand for state management</li>
+                                        <li>• wagmi + viem for Web3</li>
+                                        <li>• RainbowKit for wallet UI</li>
+                                    </ul>
+                                </div>
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-purple mb-3 uppercase tracking-wider">Backend</h4>
+                                    <ul className="font-mono text-xs text-ui-dim space-y-1.5">
+                                        <li>• Bun runtime (fast JS/TS)</li>
+                                        <li>• Hono web framework</li>
+                                        <li>• FFmpeg for audio processing</li>
+                                        <li>• Pino for structured logging</li>
+                                        <li>• ethers.js for blockchain</li>
+                                        <li>• WebSocket for real-time</li>
+                                    </ul>
+                                </div>
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-orange mb-3 uppercase tracking-wider">Blockchain</h4>
+                                    <ul className="font-mono text-xs text-ui-dim space-y-1.5">
+                                        <li>• Arbitrum Sepolia (L2)</li>
+                                        <li>• Mantle Sepolia (L2)</li>
+                                        <li>• VoiceNoteNFT (ERC-721)</li>
+                                        <li>• TippingContract</li>
+                                        <li>• EchoRegistry</li>
+                                    </ul>
+                                </div>
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-phosphor mb-3 uppercase tracking-wider">Storage & Infra</h4>
+                                    <ul className="font-mono text-xs text-ui-dim space-y-1.5">
+                                        <li>• IPFS for decentralized storage</li>
+                                        <li>• Pinata for IPFS pinning</li>
+                                        <li>• Vercel for frontend hosting</li>
+                                        <li>• Render for backend hosting</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </GuideSection>
+
+                        {/* NFT Economics */}
+                        <GuideSection
+                            icon={<DollarSign size={22} />}
+                            title="NFT Economics & Tipping"
+                            color="orange"
+                            index={9}
+                        >
+                            <p className="text-ui-dim font-mono text-sm mb-5 leading-relaxed border-l-2 border-accent-orange/30 pl-4">
+                                How value flows in the Midnight Radio ecosystem.
+                            </p>
+                            <div className="space-y-4">
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-orange mb-3 uppercase tracking-wider">Minting Costs</h4>
+                                    <p className="font-mono text-xs text-ui-dim leading-relaxed">
+                                        Broadcasting costs only gas fees (approximately $0.01-0.05 on L2 networks). The NFT minting
+                                        fee is minimal since we use efficient Layer 2 networks. IPFS storage is handled by our
+                                        backend infrastructure.
+                                    </p>
+                                </div>
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-cyan mb-3 uppercase tracking-wider">Tipping Split</h4>
+                                    <div className="flex items-center gap-4 mt-3">
+                                        <div className="flex-1 bg-accent-phosphor/20 rounded-lg p-3 text-center">
+                                            <div className="font-display text-2xl text-accent-phosphor font-bold">60%</div>
+                                            <div className="font-mono text-xs text-ui-dim">Creator</div>
+                                        </div>
+                                        <div className="flex-1 bg-accent-purple/20 rounded-lg p-3 text-center">
+                                            <div className="font-display text-2xl text-accent-purple font-bold">40%</div>
+                                            <div className="font-mono text-xs text-ui-dim">Platform</div>
+                                        </div>
+                                    </div>
+                                    <p className="font-mono text-xs text-ui-dim mt-3 leading-relaxed">
+                                        Tips are split automatically by the smart contract. 60% goes directly to the broadcaster's
+                                        wallet, while 40% supports platform development and maintenance.
+                                    </p>
+                                </div>
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-red mb-3 uppercase tracking-wider">Echo Fees</h4>
+                                    <p className="font-mono text-xs text-ui-dim leading-relaxed">
+                                        Creating an echo (reply) has a small fee that goes to the original broadcaster as an
+                                        engagement reward. This incentivizes quality content that sparks conversation.
+                                    </p>
+                                </div>
+                            </div>
+                        </GuideSection>
+
+                        {/* 24-Hour Lifecycle */}
+                        <GuideSection
+                            icon={<Signal size={22} />}
+                            title="24-Hour Ephemeral Lifecycle"
+                            color="purple"
+                            index={10}
+                        >
+                            <p className="text-ui-dim font-mono text-sm mb-5 leading-relaxed border-l-2 border-accent-purple/30 pl-4">
+                                Understanding the ephemeral nature of broadcasts.
+                            </p>
+                            <div className="space-y-4">
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-purple mb-3 uppercase tracking-wider">The Philosophy</h4>
+                                    <p className="font-mono text-xs text-ui-dim leading-relaxed">
+                                        Like a real radio signal, your broadcast fades into the void after 24 hours. This creates
+                                        urgency and authenticity—what you say matters NOW. No permanent record of every thought
+                                        following you forever.
+                                    </p>
+                                </div>
+                                <div className="bg-space-black/50 border border-ui-border/30 rounded-lg p-4">
+                                    <h4 className="font-mono text-xs text-accent-cyan mb-3 uppercase tracking-wider">What Expires vs. What Remains</h4>
+                                    <div className="grid grid-cols-2 gap-3 mt-3">
+                                        <div className="bg-accent-red/10 rounded p-3">
+                                            <div className="font-mono text-xs text-accent-red mb-2">Expires (24h)</div>
+                                            <ul className="font-mono text-xs text-ui-dim space-y-1">
+                                                <li>• Live stream visibility</li>
+                                                <li>• Tipping capability</li>
+                                                <li>• Echo capability</li>
+                                                <li>• Explore page listing</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-accent-phosphor/10 rounded p-3">
+                                            <div className="font-mono text-xs text-accent-phosphor mb-2">Permanent</div>
+                                            <ul className="font-mono text-xs text-ui-dim space-y-1">
+                                                <li>• NFT ownership</li>
+                                                <li>• IPFS audio file</li>
+                                                <li>• On-chain proof</li>
+                                                <li>• Collection entry</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </GuideSection>
+
+                        {/* FAQ Section */}
+                        <GuideSection
+                            icon={<BookOpen size={22} />}
+                            title="Frequently Asked Questions"
+                            color="cyan"
+                            index={11}
+                        >
+                            <div className="space-y-4">
+                                <FAQItem
+                                    question="What wallet do I need?"
+                                    answer="Any EVM-compatible wallet works: MetaMask, Coinbase Wallet, Rainbow, or WalletConnect-supported wallets. Hardware wallets are also supported through WalletConnect."
+                                />
+                                <FAQItem
+                                    question="How do I get testnet tokens?"
+                                    answer="For Arbitrum Sepolia: Use the official Arbitrum faucet at faucet.arbitrum.io. For Mantle Sepolia: Use the Mantle faucet at faucet.sepolia.mantle.xyz. You'll need a small amount of ETH/MNT for gas fees."
+                                />
+                                <FAQItem
+                                    question="Why can't I see my broadcast?"
+                                    answer="Broadcasts are chain-specific. Make sure you're connected to the same network (Arbitrum or Mantle) where you minted. Also check that your broadcast hasn't expired (24-hour limit)."
+                                />
+                                <FAQItem
+                                    question="Can I delete my broadcast?"
+                                    answer="NFTs are immutable on the blockchain. However, broadcasts automatically become inactive after 24 hours. The audio remains accessible via your Collection but won't appear in the live stream."
+                                />
+                                <FAQItem
+                                    question="Why use IPFS?"
+                                    answer="IPFS ensures your audio is stored in a decentralized manner. Even if our servers go down, your content remains accessible through any IPFS gateway using the CID stored in your NFT metadata."
+                                />
+                                <FAQItem
+                                    question="What's the maximum recording length?"
+                                    answer="Regular broadcasts: 5-90 seconds. Echo replies: 5-30 seconds. This keeps the stream dynamic and encourages concise, meaningful content."
+                                />
+                                <FAQItem
+                                    question="Is my voice stored forever?"
+                                    answer="The audio file on IPFS is permanent, but it's only directly linked via your NFT. After expiry, only you (the NFT owner) can easily access it through your Collection. It won't appear in public feeds."
+                                />
+                            </div>
+                        </GuideSection>
+
                         {/* Network Info */}
                         <div className="guide-section bg-gradient-to-br from-space-panel/80 to-space-black/80 border border-ui-border/50 rounded-2xl p-8 mt-16 backdrop-blur-sm">
                             <div className="flex items-center gap-3 mb-6">
@@ -235,9 +467,21 @@ export const GuidePage: React.FC = () => {
                                     chainId="5003"
                                 />
                             </div>
-                            <p className="font-mono text-xs text-ui-dim mt-6 text-center">
-                                Get testnet tokens from faucets to start broadcasting.
-                            </p>
+                            <div className="mt-6 space-y-3">
+                                <p className="font-mono text-xs text-ui-dim text-center">
+                                    Get testnet tokens from faucets to start broadcasting.
+                                </p>
+                                <div className="flex justify-center gap-4">
+                                    <a href="https://www.alchemy.com/faucets/arbitrum-sepolia" target="_blank" rel="noopener noreferrer"
+                                        className="font-mono text-xs text-accent-cyan hover:underline">
+                                        Arbitrum Faucet →
+                                    </a>
+                                    <a href="https://faucet.sepolia.mantle.xyz" target="_blank" rel="noopener noreferrer"
+                                        className="font-mono text-xs text-accent-purple hover:underline">
+                                        Mantle Faucet →
+                                    </a>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
@@ -380,6 +624,29 @@ const NetworkCard: React.FC<{ name: string; type: string; chainId: string }> = (
                 <div className="w-2 h-2 rounded-full bg-accent-phosphor animate-pulse" />
                 <span className="font-mono text-xs text-ui-dim">Chain ID: {chainId}</span>
             </div>
+        </div>
+    );
+};
+
+const FAQItem: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    return (
+        <div
+            className={`bg-space-black/50 border rounded-lg overflow-hidden transition-all cursor-pointer ${isOpen ? 'border-accent-cyan/40' : 'border-ui-border/30 hover:border-ui-border/50'}`}
+            onClick={() => setIsOpen(!isOpen)}
+        >
+            <div className="p-4 flex items-center justify-between">
+                <h4 className="font-mono text-sm text-white">{question}</h4>
+                <span className={`text-accent-cyan transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                    ▼
+                </span>
+            </div>
+            {isOpen && (
+                <div className="px-4 pb-4 border-t border-ui-border/20 pt-3">
+                    <p className="font-mono text-xs text-ui-dim leading-relaxed">{answer}</p>
+                </div>
+            )}
         </div>
     );
 };
