@@ -165,7 +165,7 @@ export const SettingsPage: React.FC = () => {
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div>
                                 <h3 className="text-2xl font-bold text-white mb-1">Wallet Connection</h3>
-                                <p className="text-sm text-ui-dim">Manage your connected Mantle wallet.</p>
+                                <p className="text-sm text-ui-dim">Manage your connected wallet.</p>
                             </div>
 
                             <div className="bg-space-panel/50 border border-ui-border rounded-xl p-6 flex items-center justify-between">

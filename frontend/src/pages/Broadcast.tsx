@@ -71,10 +71,9 @@ export const BroadcastPage: React.FC = () => {
         return () => ctx.revert();
     }, [isRecording]);
 
-    // If not connected, show WalletGate (AFTER all hooks!)
     if (!isConnected) {
         return (
-            <WalletGate message="Connect your wallet to broadcast voice notes and mint them as NFTs on Mantle" />
+            <WalletGate message="Connect your wallet to broadcast voice notes and mint them as NFTs" />
         );
     }
 

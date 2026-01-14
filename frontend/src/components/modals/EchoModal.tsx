@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Mic, Radio, Square, Play, Pause, Waves, Sparkles, Zap } from 'lucide-react';
 import { MintingStatus, Signal } from '@/types';
 import { cn } from '@/lib/utils';
+import { useChainId } from 'wagmi';
+import { getChainConfig } from '@/lib/chains';
 
 interface EchoModalProps {
     onClose: () => void;
@@ -23,6 +25,10 @@ export const EchoModal: React.FC<EchoModalProps> = ({
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const isMinting = mintingStatus !== 'IDLE';
     const hasRecording = audioUrl !== null && !isRecording;
+
+    // Get current chain for dynamic text
+    const chainId = useChainId();
+    const chainConfig = useMemo(() => getChainConfig(chainId), [chainId]);
 
     // Debug logging
     useEffect(() => {
@@ -260,7 +266,7 @@ export const EchoModal: React.FC<EchoModalProps> = ({
                             <span className="w-1 h-1 rounded-full bg-ui-dim/30" />
                             <span>🔗 STORED ON IPFS</span>
                             <span className="w-1 h-1 rounded-full bg-ui-dim/30" />
-                            <span>⛓ MANTLE NFT</span>
+                            <span>⛓ {chainConfig.shortName} NFT</span>
                         </div>
                     )}
                 </div>

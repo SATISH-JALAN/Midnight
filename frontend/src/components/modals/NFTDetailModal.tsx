@@ -209,7 +209,7 @@ export const NFTDetailModal: React.FC<NFTDetailModalProps> = ({ onClose, nft }) 
                     rel="noopener noreferrer"
                     className="w-full py-3 mt-6 border border-ui-border text-ui-dim hover:text-white hover:border-accent-cyan hover:bg-accent-cyan/5 rounded flex items-center justify-center gap-2 text-xs font-mono font-bold tracking-wider transition-all"
                 >
-                    VIEW ON MANTLE EXPLORER <ExternalLink size={12} />
+                    VIEW ON {chainConfig.name.toUpperCase()} <ExternalLink size={12} />
                 </a>
             </div>
         </div>
