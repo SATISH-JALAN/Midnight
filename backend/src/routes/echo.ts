@@ -104,64 +104,19 @@ echoRoutes.post('/:parentNoteId', async (c) => {
     await audioProcessor.deleteAudio(processResult.noteId);
     logger.info({ noteId: processResult.noteId }, 'Local file cleaned up');
 
-    // 6. Register echo on blockchain (REQUIRED - no echo without on-chain proof)
-    const result = await blockchainService.registerEcho(
-      parentNoteId,
-      processResult.noteId,
-      ipfsResult.metadataUrl, // Store IPFS URL for retrieval
-      parentBroadcaster!,
-      walletAddress,
-      chainId // Pass chainId to use correct chain
-    );
-    const txHash = result.txHash;
-    
-    logger.info({ txHash, parentNoteId, echoNoteId: processResult.noteId }, 'Echo registered on blockchain');
+    // NOTE: Blockchain registration is now done by the USER on the frontend
+    // The backend only handles IPFS upload and returns the data for the contract call
 
-    // 7. Create echo note object
-    const echoNote: Note = {
-      noteId: processResult.noteId,
-      tokenId: 0,
-      audioUrl: ipfsResult.audioUrl,
-      metadataUrl: ipfsResult.metadataUrl,
-      duration: processResult.duration,
-      moodColor: '#A855F7',
-      waveform: processResult.waveform,
-      timestamp: Date.now(),
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-      broadcaster: walletAddress,
-      sector: parentSector,
-      tips: 0,
-      echoes: 0,
-      isEcho: true,
-      parentNoteId: parentNoteId,
-      chainId: chainId,
-    };
-
-    // 8. Add echo to queue
-    queueManager.addNote(echoNote);
-
-    // 9. Increment parent's echo count
-    queueManager.addEcho(parentNoteId);
-
-    // 10. Broadcast echo event via WebSocket
-    wsManager.broadcastEchoAdded({
-      echoNoteId: echoNote.noteId,
-      parentNoteId: parentNoteId,
-      broadcaster: walletAddress,
-      audioUrl: echoNote.audioUrl,
-      duration: echoNote.duration,
-    });
-
-    // 11. Return success
+    // Return success with data needed for frontend contract call
     return c.json({
       success: true,
       data: {
-        echoNoteId: echoNote.noteId,
+        echoNoteId: processResult.noteId,
         parentNoteId: parentNoteId,
-        audioUrl: echoNote.audioUrl,
-        metadataUrl: echoNote.metadataUrl,
-        duration: echoNote.duration,
-        txHash: txHash || null,
+        audioUrl: ipfsResult.audioUrl,
+        metadataUrl: ipfsResult.metadataUrl,
+        duration: processResult.duration,
+        parentBroadcaster: parentBroadcaster,
       },
     });
 
