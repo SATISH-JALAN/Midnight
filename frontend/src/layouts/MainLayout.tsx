@@ -145,7 +145,7 @@ export const MainLayout: React.FC = () => {
             if (isEcho && currentSignal?.id) {
                 // Upload as echo reply
                 const { uploadEcho } = await import('@/services/api');
-                uploadResponse = await uploadEcho(currentSignal.id, recorder.audioBlob, address);
+                uploadResponse = await uploadEcho(currentSignal.id, recorder.audioBlob, address, chainId);
             } else {
                 // Standard broadcast upload
                 uploadResponse = await uploadAudio(recorder.audioBlob, address);

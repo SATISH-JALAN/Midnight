@@ -21,6 +21,8 @@ echoRoutes.post('/:parentNoteId', async (c) => {
     const formData = await c.req.formData();
     const audioFile = formData.get('audio') as File | null;
     const walletAddress = formData.get('walletAddress') as string | null;
+    const chainIdStr = formData.get('chainId') as string | null;
+    const chainId = chainIdStr ? parseInt(chainIdStr, 10) : undefined;
 
     // Validate file size (max 10MB)
     if (audioFile && audioFile.size > 10 * 1024 * 1024) {
@@ -108,7 +110,8 @@ echoRoutes.post('/:parentNoteId', async (c) => {
       processResult.noteId,
       ipfsResult.metadataUrl, // Store IPFS URL for retrieval
       parentBroadcaster!,
-      walletAddress
+      walletAddress,
+      chainId // Pass chainId to use correct chain
     );
     const txHash = result.txHash;
     
@@ -131,6 +134,7 @@ echoRoutes.post('/:parentNoteId', async (c) => {
       echoes: 0,
       isEcho: true,
       parentNoteId: parentNoteId,
+      chainId: chainId,
     };
 
     // 8. Add echo to queue

@@ -201,11 +201,15 @@ export interface EchoListResponse {
 export async function uploadEcho(
   parentNoteId: string,
   audioBlob: Blob,
-  walletAddress: string
+  walletAddress: string,
+  chainId?: number
 ): Promise<EchoResponse> {
   const formData = new FormData();
   formData.append('audio', audioBlob, 'echo.webm');
   formData.append('walletAddress', walletAddress);
+  if (chainId) {
+    formData.append('chainId', chainId.toString());
+  }
 
   try {
     const response = await fetch(`${API_BASE}/api/echo/${parentNoteId}`, {
