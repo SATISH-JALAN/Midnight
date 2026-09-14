@@ -104,19 +104,67 @@ echoRoutes.post('/:parentNoteId', async (c) => {
     await audioProcessor.deleteAudio(processResult.noteId);
     logger.info({ noteId: processResult.noteId }, 'Local file cleaned up');
 
-    // NOTE: Blockchain registration is now done by the USER on the frontend
-    // The backend only handles IPFS upload and returns the data for the contract call
+    // 7. Register echo on blockchain (backend pays)
+    const echoChainId = chainId || parseInt(c.req.header('x-chain-id') || '5003');
+    let txHash = '';
+    try {
+      const echoResult = await blockchainService.registerEcho(
+        parentNoteId,
+        processResult.noteId,
+        ipfsResult.metadataUrl,
+        parentBroadcaster,
+        echoChainId
+      );
+      txHash = echoResult.txHash;
+      logger.info({ txHash, parentNoteId, echoNoteId: processResult.noteId }, 'Echo registered on blockchain');
+    } catch (err) {
+      logger.warn({ err, parentNoteId }, 'Blockchain echo registration failed - continuing with queue only');
+    }
 
-    // Return success with data needed for frontend contract call
+    // 8. Create note object for queue
+    const echoNote: Note = {
+      noteId: processResult.noteId,
+      tokenId: 0,
+      audioUrl: ipfsResult.audioUrl,
+      metadataUrl: ipfsResult.metadataUrl,
+      duration: processResult.duration,
+      moodColor: '#A855F7', // Purple for echoes
+      waveform: [],
+      timestamp: Date.now(),
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      broadcaster: walletAddress,
+      sector: 'Echo Sector',
+      tips: 0,
+      echoes: 0,
+      isEcho: true,
+      parentNoteId: parentNoteId,
+      chainId: echoChainId,
+    };
+
+    // 9. Add to queue for instant display
+    queueManager.addNote(echoNote);
+    queueManager.addEcho(parentNoteId);
+
+    // 10. Broadcast via WebSocket
+    wsManager.broadcastEchoAdded({
+      echoNoteId: echoNote.noteId,
+      parentNoteId: parentNoteId,
+      broadcaster: walletAddress,
+      audioUrl: echoNote.audioUrl,
+      duration: echoNote.duration,
+    });
+
+    logger.info({ echoNoteId: processResult.noteId, parentNoteId, duration: processResult.duration }, 'Echo added to queue');
+
     return c.json({
       success: true,
       data: {
-        echoNoteId: processResult.noteId,
-        parentNoteId: parentNoteId,
+        noteId: processResult.noteId,
         audioUrl: ipfsResult.audioUrl,
         metadataUrl: ipfsResult.metadataUrl,
         duration: processResult.duration,
-        parentBroadcaster: parentBroadcaster,
+        echoes: 1,
+        txHash: txHash,
       },
     });
 
@@ -157,7 +205,9 @@ echoRoutes.get('/:parentNoteId', async (c) => {
               ? echo.metadataUrl.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')
               : echo.metadataUrl;
             
-            const response = await fetch(gatewayUrl);
+            const response = await fetch(gatewayUrl, {
+              signal: AbortSignal.timeout(5000) // 5 second timeout
+            });
             if (response.ok) {
               const metadata = await response.json();
               audioUrl = metadata.animation_url || metadata.audio || '';
@@ -169,7 +219,7 @@ echoRoutes.get('/:parentNoteId', async (c) => {
             }
           }
         } catch (err) {
-          logger.warn({ err, echoNoteId: echo.echoNoteId }, 'Failed to fetch echo metadata');
+          // Silently continue - echo will just have empty audio URL
         }
         
         return {

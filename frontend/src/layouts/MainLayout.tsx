@@ -10,7 +10,6 @@ import { useRadioStore } from '@/store/useRadioStore';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useNFTMint } from '@/hooks/useNFTMint';
-import { useEchoMint } from '@/hooks/useEchoMint';
 import { useWebSocket } from '@/services/useWebSocket';
 import { uploadAudio } from '@/services/api';
 import { useAccount } from 'wagmi';
@@ -28,9 +27,6 @@ export const MainLayout: React.FC = () => {
 
     // NFT Minting hook
     const nftMint = useNFTMint(address);
-
-    // Echo Minting hook (user signs)
-    const echoMint = useEchoMint(address);
 
     const {
         wallet,
@@ -159,32 +155,8 @@ export const MainLayout: React.FC = () => {
                 throw new Error(uploadResponse.error || 'Upload failed');
             }
 
-            // For echoes, the user now signs the transaction (not backend)
+            // For echoes, backend handles blockchain registration
             if (isEcho) {
-                const echoData = uploadResponse.data;
-                const parentBroadcaster = currentSignal?.broadcaster || currentSignal?.broadcasterAddress;
-
-                if (!parentBroadcaster) {
-                    throw new Error('Could not find parent broadcaster address');
-                }
-
-                // Step 3: User signs the echo transaction
-                setMintingStatus('AWAITING_SIGNATURE');
-                addToast('Please confirm echo transaction in MetaMask...', 'INFO');
-
-                // Step 4: Register echo on blockchain (user pays)
-                setMintingStatus('MINTING');
-                const echoResult = await echoMint.registerEcho(
-                    currentSignal!.id,
-                    echoData.echoNoteId,
-                    echoData.metadataUrl,
-                    parentBroadcaster
-                );
-
-                if (!echoResult.success) {
-                    throw new Error(echoResult.error || 'Echo registration failed');
-                }
-
                 // Update the signal's echo count in the store
                 const { signals, setSignals, currentSignal: storeSignal } = useRadioStore.getState();
                 if (storeSignal) {
@@ -197,7 +169,7 @@ export const MainLayout: React.FC = () => {
                 }
 
                 setMintingStatus('SUCCESS');
-                addToast(`🔊 Echo sent to Signal #${currentSignal?.id?.substring(0, 6)}! Tx: ${echoResult.txHash.substring(0, 10)}...`, 'SUCCESS');
+                addToast(`🔊 Echo sent to Signal #${currentSignal?.id?.substring(0, 6)}!`, 'SUCCESS');
 
                 // Reset after success
                 setTimeout(() => {

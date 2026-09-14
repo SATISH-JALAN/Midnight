@@ -76,6 +76,78 @@ interface ChainContracts {
 export class BlockchainService {
   private chains: Map<number, ChainContracts> = new Map();
   private defaultChainId: number = DEFAULT_CHAIN_ID;
+  
+  // Metadata cache: tokenId -> { data, timestamp }
+  private metadataCache: Map<string, { data: any; timestamp: number }> = new Map();
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+  private readonly IPFS_GATEWAYS = [
+    'https://gateway.pinata.cloud/ipfs/',
+    'https://dweb.link/ipfs/',
+    'https://ipfs.io/ipfs/',
+  ];
+
+  /**
+   * Fetch metadata from IPFS with retry and multi-gateway fallback
+   */
+  private async fetchMetadataWithRetry(tokenURI: string, tokenId: string): Promise<any | null> {
+    // Check cache first
+    const cacheKey = `${tokenId}`;
+    const cached = this.metadataCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
+      return cached.data;
+    }
+
+    // Extract CID from IPFS URL
+    let cid = '';
+    if (tokenURI.startsWith('ipfs://')) {
+      cid = tokenURI.replace('ipfs://', '');
+    } else if (tokenURI.includes('/ipfs/')) {
+      cid = tokenURI.split('/ipfs/').pop() || '';
+    } else {
+      // Direct HTTP URL, try to fetch directly
+      try {
+        const response = await fetch(tokenURI, { signal: AbortSignal.timeout(8000) });
+        if (response.ok) {
+          const data = await response.json();
+          this.metadataCache.set(cacheKey, { data, timestamp: Date.now() });
+          return data;
+        }
+      } catch {
+        return null;
+      }
+    }
+
+    if (!cid) return null;
+
+    // Try each gateway with retry
+    for (const gateway of this.IPFS_GATEWAYS) {
+      const url = gateway + cid;
+      
+      // Try twice per gateway
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const response = await fetch(url, { 
+            signal: AbortSignal.timeout(8000) // 8 second timeout
+          });
+          if (response.ok) {
+            const data = await response.json();
+            // Cache the successful result
+            this.metadataCache.set(cacheKey, { data, timestamp: Date.now() });
+            logger.debug({ tokenId, gateway: gateway.substring(0, 30) }, 'Metadata fetched successfully');
+            return data;
+          }
+        } catch (err) {
+          // Wait 1 second before retry
+          if (attempt === 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+    }
+
+    logger.warn({ tokenId }, 'Failed to fetch metadata from all gateways');
+    return null;
+  }
 
   constructor() {
     // Initialize Mantle Sepolia (primary chain)
@@ -384,23 +456,8 @@ export class BlockchainService {
         // Tips might not exist for this token
       }
 
-      // Fetch metadata from IPFS/HTTP
-      let metadata: any = null;
-      try {
-        let metadataUrl = tokenURI;
-        if (tokenURI.startsWith('ipfs://')) {
-          metadataUrl = tokenURI.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
-        }
-        
-        const response = await fetch(metadataUrl, { 
-          signal: AbortSignal.timeout(10000)
-        });
-        if (response.ok) {
-          metadata = await response.json();
-        }
-      } catch (err) {
-        logger.warn({ tokenId: tokenId.toString() }, 'Failed to fetch metadata from IPFS');
-      }
+      // Fetch metadata from IPFS with caching, retry, and multi-gateway fallback
+      const metadata = await this.fetchMetadataWithRetry(tokenURI, tokenId.toString());
 
       // Get echo count from echo contract
       let echoes = 0;
